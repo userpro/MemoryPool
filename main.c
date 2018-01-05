@@ -7,14 +7,12 @@
     #define My_Malloc(x) MemoryPool_Alloc(mp, x)
     #define My_Free(x)   MemoryPool_Free(mp, x)
 #else
-    #define KB (1<<10)
-    #define MB (1<<20)
-    #define GB (1<<30)
+    #define KB (unsigned long long)(1<<10)
+    #define MB (unsigned long long)(1<<20)
+    #define GB (unsigned long long)(1<<30)
     #define My_Malloc(x) malloc(x)
     #define My_Free(x)   free(x)
 #endif
-
-#define MEM_SIZE (1*GB+500*MB)
 
 #define SHOW(x) do { \
         printf("->%s->> Memory Usage: %.4lf\n->> Memory Usage(prog): %.4lf\n", \
@@ -25,9 +23,13 @@
         printf("\n"); \
 }while (0)
 
+// ATTENTION !!!!!!
+// You can modify this to match your computer.
+#define MEM_SIZE (4*GB+500*MB)
+#define DATA_N 30000000
+
 #define uint unsigned int
-#define N 10000000
-char *mem[N] = {0};
+char *mem[DATA_N] = {0};
 
 void _init()
 {
@@ -47,7 +49,11 @@ int main()
     double total_time;
     start = clock();
     // -------- clock start ----------
-    uint total_size = 0, cur_size = 0, cnt = 0;
+#ifdef _z_memorypool_h_
+    mem_size_t total_size = 0, cur_size = 0, cnt = 0;
+#else
+    unsigned long long total_size = 0, cur_size = 0, cnt = 0;
+#endif
 
 #ifndef _z_memorypool_h_
     printf("System malloc:\n");
@@ -66,7 +72,7 @@ int main()
 #endif
 
         total_size = 0; cnt = 0;
-        for (int j = 0; j < N; ++j)
+        for (int j = 0; j < DATA_N; ++j)
         {
             cur_size = random_uint(200);
             total_size += cur_size;
@@ -81,12 +87,6 @@ int main()
 
         for (int j = 0; j < cnt; ++j)
             My_Free(mem[j]);
-
-        if (free_cnt > 1)
-        {
-            printf("%p %p %.4lfMB\n", (char*)mp->free_list, (char *)mp->free_list->next  + mp->free_list->next->alloc_mem,\
-                (double)(mp->free_list->alloc_mem + mp->free_list->next->alloc_mem)/1024/1024);
-        }
 
 #ifdef _z_memorypool_h_
         SHOW("Free After: \n");

@@ -7,6 +7,8 @@
 // #define MEM_ALLOC_DEBUG 1 // MemPool Alloc的调试开关 耗性能
 // #define MEM_FREE_DEBUG 1 // MemPool Free的调试开关 耗性能
 
+#define MAX_MEM_SIZE (16 * GB)
+
 #ifndef bool
 	#define bool int
 #endif
@@ -64,8 +66,6 @@
 #define KB (mem_size_t)(1 << 10)
 #define MB (mem_size_t)(1 << 20)
 #define GB (mem_size_t)(1 << 30)
-
-#define MAX_MEM_SIZE (4 * GB)
 
 typedef struct _chunk
 {
