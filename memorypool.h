@@ -1,5 +1,5 @@
-#ifndef _memorypool_h_
-#define _memorypool_h_
+#ifndef _z_memorypool_h_
+#define _z_memorypool_h_
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -111,5 +111,5 @@ double get_mempool_prog_usage(MemoryPool *mp);
 void get_mem_manager_info(MemoryPool *mp);
 
 
-#endif // !_memorypool_h_
+#endif // !_z_memorypool_h_
 
