@@ -102,7 +102,7 @@ bool MemoryPool_Destroy(MemoryPool *mp);
  *	获取内存池信息
  */
 
-void list_count(MemoryPool *mp, mem_size_t *fl, mem_size_t *al);
+void get_mempool_list_count(MemoryPool *mp, mem_size_t *free_list_len, mem_size_t *alloc_list_len);
 
 double get_mempool_usage(MemoryPool *mp);
 

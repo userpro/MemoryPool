@@ -20,7 +20,7 @@
         printf("->%s->> Memory Usage: %.4lf\n->> Memory Usage(prog): %.4lf\n", \
             x, get_mempool_usage(mp), get_mempool_prog_usage(mp)); \
         printf("->> "); \
-        list_count(mp, &free_cnt, &alloc_cnt); \
+        get_mempool_list_count(mp, &free_cnt, &alloc_cnt); \
         printf("[list_count] free_list(%llu)  alloc_list(%llu)\n", free_cnt, alloc_cnt); \
         printf("\n"); \
 }while (0)

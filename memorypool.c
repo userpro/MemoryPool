@@ -199,7 +199,7 @@ bool MemoryPool_Destroy(MemoryPool *mp)
 	return 1;
 }
 
-void list_count(MemoryPool *mp, mem_size_t *fl, mem_size_t *al)
+void get_mempool_list_count(MemoryPool *mp, mem_size_t *free_list_len, mem_size_t *alloc_list_len)
 {
 	mem_size_t free_l = 0, alloc_l = 0;
 	Chunk *p = mp->free_list;
@@ -216,8 +216,8 @@ void list_count(MemoryPool *mp, mem_size_t *fl, mem_size_t *al)
 		p = p->next;
 	}
 
-	*fl = free_l;
-	*al = alloc_l;
+	*free_list_len = free_l;
+	*alloc_list_len = alloc_l;
 }
 
 double get_mempool_usage(MemoryPool *mp)
