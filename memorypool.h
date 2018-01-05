@@ -42,17 +42,22 @@
 	} \
 } while(0)
 
+#ifndef MEM_FREE_DEBUG
+	#define BEFORE(x, y) do { \
+		printf("\n[%s] before:  ", y); \
+		mem_size_t a,b; \
+		get_mempool_list_count(x, &a, &b); \
+		printf("free_list(%llu)  alloc_list(%llu)\n", a, b); \
+	} while(0)
 
-#define BEFORE(x, y) do { \
-	printf("\n[%s] before:  ", y); \
-	list_count(x); \
-} while(0)
-
-#define AFTER(x, y) do { \
-	printf("[%s] after:  ", y); \
-	list_count(x); \
-	printf("\n"); \
-} while(0)
+	#define AFTER(x, y) do { \
+		printf("[%s] after:  ", y); \
+		mem_size_t a,b; \
+		get_mempool_list_count(x, &a, &b); \
+		printf("free_list(%llu)  alloc_list(%llu)\n", a, b); \
+		printf("\n"); \
+	} while(0)
+#endif
 
 
 #define KB (mem_size_t)(1 << 10)
