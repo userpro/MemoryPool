@@ -42,7 +42,7 @@
 	} \
 } while(0)
 
-#ifndef MEM_FREE_DEBUG
+#ifdef MEM_FREE_DEBUG
 	#define BEFORE(x, y) do { \
 		printf("\n[%s] before:  ", y); \
 		mem_size_t a,b; \
