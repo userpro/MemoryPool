@@ -19,11 +19,9 @@ int main()
 
 ## API
 
-```
-/*
- *	内存池API
- */
+###内存池API
 
+~~~c
 MemoryPool *MemoryPool_Init(mem_size_t mempoolsize);
 
 void *MemoryPool_Alloc(MemoryPool *mp, mem_size_t wantsize);
@@ -33,11 +31,11 @@ bool MemoryPool_Free(MemoryPool *mp, void *p);
 MemoryPool *MemoryPool_Clear(MemoryPool *mp);
 
 bool MemoryPool_Destroy(MemoryPool *mp);
+~~~
 
-/*
- *	获取内存池信息
- */
+###获取内存池信息
 
+~~~c
 void list_count(MemoryPool *mp, mem_size_t *fl, mem_size_t *al);
 
 double get_mempool_usage(MemoryPool *mp);
@@ -45,4 +43,4 @@ double get_mempool_usage(MemoryPool *mp);
 double get_mempool_prog_usage(MemoryPool *mp);
 
 void get_mem_manager_info(MemoryPool *mp);
-```
+~~~
