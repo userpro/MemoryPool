@@ -19,7 +19,7 @@ int main()
 
 ## API
 
-### 内存池API
+- 内存池
 
 ~~~c
 MemoryPool *MemoryPool_Init(mem_size_t mempoolsize);
@@ -33,7 +33,7 @@ MemoryPool *MemoryPool_Clear(MemoryPool *mp);
 bool MemoryPool_Destroy(MemoryPool *mp);
 ~~~
 
-### 获取内存池信息
+- 获取内存池信息
 
 ~~~c
 void list_count(MemoryPool *mp, mem_size_t *fl, mem_size_t *al);
