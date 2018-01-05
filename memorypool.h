@@ -43,6 +43,7 @@
 } while(0)
 
 #ifdef MEM_FREE_DEBUG
+	#include <stdio.h>
 	#define BEFORE(x, y) do { \
 		printf("\n[%s] before:  ", y); \
 		mem_size_t a,b; \
