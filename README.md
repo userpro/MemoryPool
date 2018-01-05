@@ -1,5 +1,5 @@
 # MemoryPool
-一个极简内存池实现
+一个极简内存池实现(基于First Fit算法)
 
 ## Example
 
@@ -19,6 +19,10 @@ int main()
 
 ## API
 
+- 预定义宏
+
+`KB` `MB` `GB`
+
 - 内存池
 
 `mem_size_t` => `unsigned long long`
@@ -36,6 +40,10 @@ bool MemoryPool_Destroy(MemoryPool *mp);
 ~~~
 
 - 获取内存池信息
+
+`get_mempool_usage` 获取当前内存池已使用内存比例
+
+`get_mempool_prog_usage` 获取内存池中真实分配内存比例(除去了内存池管理结构占用的内存)
 
 ~~~c
 void get_mempool_list_count(MemoryPool *mp, mem_size_t *free_list_len, mem_size_t *alloc_list_len);
