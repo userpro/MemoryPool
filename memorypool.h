@@ -114,8 +114,6 @@ double get_mempool_usage(MemoryPool *mp);
 
 double get_mempool_prog_usage(MemoryPool *mp);
 
-void get_mem_manager_info(MemoryPool *mp);
-
 
 #endif // !_z_memorypool_h_
 

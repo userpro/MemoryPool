@@ -43,6 +43,4 @@ void get_mempool_list_count(MemoryPool *mp, mem_size_t *free_list_len, mem_size_
 double get_mempool_usage(MemoryPool *mp);
 
 double get_mempool_prog_usage(MemoryPool *mp);
-
-void get_mem_manager_info(MemoryPool *mp);
 ~~~
