@@ -3,7 +3,7 @@
 #include <time.h>
 #include "memorypool.h"
 
-#ifdef _memorypool_h_
+#ifdef _z_memorypool_h_
     #define My_Malloc(x) MemoryPool_Alloc(mp, x)
     #define My_Free(x)   MemoryPool_Free(mp, x)
 #else
@@ -49,7 +49,7 @@ int main()
     // -------- clock start ----------
     uint total_size = 0, cur_size = 0, cnt = 0;
 
-#ifndef _memorypool_h_
+#ifndef _z_memorypool_h_
     printf("System malloc:\n");
 #else
     printf("Memory Pool:\n");
@@ -61,7 +61,7 @@ int main()
     for (int i = 0; i < 3; ++i)
     {
         printf("-------------------------\n");
-#ifdef _memorypool_h_
+#ifdef _z_memorypool_h_
         SHOW("Alloc Before: \n");
 #endif
 
@@ -75,7 +75,7 @@ int main()
             cnt++;
         }
 
-#ifdef _memorypool_h_
+#ifdef _z_memorypool_h_
         SHOW("Free Before: \n");
 #endif
 
@@ -88,7 +88,7 @@ int main()
                 (double)(mp->free_list->alloc_mem + mp->free_list->next->alloc_mem)/1024/1024);
         }
 
-#ifdef _memorypool_h_
+#ifdef _z_memorypool_h_
         SHOW("Free After: \n");
 #endif
         printf("total_size: %.4lf MB\n", (double)total_size/1024/1024);
