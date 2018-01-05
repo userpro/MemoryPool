@@ -21,6 +21,8 @@ int main()
 
 - 内存池
 
+`mem_size_t` => `unsigned long long`
+
 ~~~c
 MemoryPool *MemoryPool_Init(mem_size_t mempoolsize);
 
