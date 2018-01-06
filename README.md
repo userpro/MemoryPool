@@ -30,6 +30,10 @@ int main()
 
 `mem_size_t` => `unsigned long long`
 
+`MemoryPool_Alloc` 行为与系统malloc一致(唔 参数多一个)
+
+`MemoryPool_Free` 行为与系统free一致(唔 多了个返回值)
+
 ~~~c
 MemoryPool *MemoryPool_Init(mem_size_t mempoolsize);
 
@@ -64,7 +68,7 @@ double get_mempool_prog_usage(MemoryPool *mp);
 
 - 多食用`MemoryPool_Clear`
 
-- 在**2GB**数据量下比系统`malloc` `free`平均快 **30%-50%** (食用`MemoryPool_Clear`效果更明显)
+- 在 **2GB** 数据量下比系统`malloc` `free`平均快 **30%-50%** (食用`MemoryPool_Clear`效果更明显)
 
 - `mem_size_t`使用`unsigned long long`以支持4GB以上内存管理(头文件中`MAX_MEM_SIZE`宏定义了最大可管理内存)
 
