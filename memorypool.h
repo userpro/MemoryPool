@@ -4,8 +4,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-// #define MEM_ALLOC_DEBUG 1 // MemPool Alloc的调试开关 耗性能
-// #define MEM_FREE_DEBUG 1 // MemPool Free的调试开关 耗性能
+// #define MEM_DEBUG 1 // MemPool的调试开关 耗性能
 
 #define MAX_MEM_SIZE (16 * GB)
 
@@ -26,6 +25,17 @@
 #endif
 
 
+#define init_Memory(mm) do { \
+	mm->alloc_mem = 0; \
+	mm->alloc_prog_mem = 0; \
+	mm->free_list = (Chunk *)mm->start; \
+	mm->free_list->is_free = 1; \
+	mm->free_list->alloc_mem = mp->mem_pool_size; \
+	mm->free_list->prev = NULL; \
+	mm->free_list->next = NULL; \
+	mm->alloc_list = NULL; \
+} while (0)
+
 #define dlinklist_insert_front(head,x) do { \
 	x->prev = NULL; \
 	x->next = head; \
@@ -44,7 +54,8 @@
 	} \
 } while(0)
 
-#ifdef MEM_FREE_DEBUG
+
+#ifdef MEM_DEBUG
 	#include <stdio.h>
 	#define BEFORE(x, y) do { \
 		printf("\n[%s] before:  ", y); \
@@ -75,26 +86,39 @@ typedef struct _chunk
 	bool is_free;
 }Chunk;
 
-typedef struct _mem_pool
+typedef struct _mem_pool_list
 {
 	char *start;
-	mem_size_t mem_pool_size;
 	mem_size_t alloc_mem;
 	mem_size_t alloc_prog_mem;
 	Chunk *free_list, *alloc_list;
+	struct _mem_pool_list *next;
+}Memory;
+
+typedef struct _mem_pool
+{
+	mem_size_t mem_pool_size, total_mem_pool_size;
+	struct _mem_pool_list *mlist;
+	bool auto_extend;
 }MemoryPool;
 
 /*
  *	内部工具函数
  */
 
-static bool merge_free_chunk(MemoryPool *mp, Chunk *c);
+void get_memory_list_count(MemoryPool *mp, mem_size_t *free_list_len, mem_size_t *alloc_list_len);
+
+static bool merge_free_chunk(MemoryPool *mp, Memory *mm, Chunk *c);
+
+static Memory *find_memory_list(MemoryPool *mp, void *p);
+
+static Memory *extend_memory_list(MemoryPool *mp);
 
 /*
  *	内存池API
  */
 
-MemoryPool *MemoryPool_Init(mem_size_t mempoolsize);
+MemoryPool *MemoryPool_Init(mem_size_t mempoolsize, bool auto_extend);
 
 void *MemoryPool_Alloc(MemoryPool *mp, mem_size_t wantsize);
 
@@ -107,8 +131,6 @@ bool MemoryPool_Destroy(MemoryPool *mp);
 /*
  *	获取内存池信息
  */
-
-void get_mempool_list_count(MemoryPool *mp, mem_size_t *free_list_len, mem_size_t *alloc_list_len);
 
 double get_mempool_usage(MemoryPool *mp);
 

@@ -1,7 +1,6 @@
 # MemoryPool
 
-一个极简内存池实现(基于First Fit算法)
-
+一个极简内存池实现(基于First Fit算法, 可扩展)
 
 
 ## Example
@@ -17,7 +16,7 @@ struct TAT
 
 int main()
 {
-    MemoryPool *mp = MemoryPool_Init(1*GB + 500*MB + 500*KB);
+    MemoryPool *mp = MemoryPool_Init(1*GB + 500*MB + 500*KB, 1); // Open auto extend
     struct TAT *tat = (struct TAT *)MemoryPool_Alloc(mp, sizeof(struct TAT));
     tat->T_T = 2333;
     printf("%d\n", tat->T_T);
@@ -38,12 +37,18 @@ int main()
 
 `mem_size_t` => `unsigned long long`
 
+`MemoryPool_Init` 参数(`mem_size_t mempoolsize`, `bool auto_extend`)
+
+> `mempoolsize`: 内存池字节数
+
+> `auto_extend`: 是否自动扩展 (1->开启自动扩展 0->不开启)
+
 `MemoryPool_Alloc` 行为与系统malloc一致(唔 参数多一个)
 
 `MemoryPool_Free` 行为与系统free一致(唔 多了个返回值)
 
 ~~~c
-MemoryPool *MemoryPool_Init(mem_size_t mempoolsize);
+MemoryPool *MemoryPool_Init(mem_size_t mempoolsize, bool auto_extend);
 
 void *MemoryPool_Alloc(MemoryPool *mp, mem_size_t wantsize);
 
@@ -61,12 +66,14 @@ bool MemoryPool_Destroy(MemoryPool *mp);
 `get_mempool_prog_usage` 获取内存池中真实分配内存比例(除去了内存池管理结构占用的内存)
 
 ~~~c
-void get_mempool_list_count(MemoryPool *mp, mem_size_t *free_list_len, mem_size_t *alloc_list_len);
-
 double get_mempool_usage(MemoryPool *mp);
 
 double get_mempool_prog_usage(MemoryPool *mp);
 ~~~
+
+## Update
+
+- 增加了自动扩展 (内存池耗尽时自动新扩展一个mempoolsize大小的内存)
 
 ## Tips
 

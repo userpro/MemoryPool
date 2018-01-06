@@ -18,15 +18,15 @@
         printf("->%s->> Memory Usage: %.4lf\n->> Memory Usage(prog): %.4lf\n", \
             x, get_mempool_usage(mp), get_mempool_prog_usage(mp)); \
         printf("->> "); \
-        get_mempool_list_count(mp, &free_cnt, &alloc_cnt); \
+        get_memory_list_count(mp, &free_cnt, &alloc_cnt); \
         printf("[list_count] free_list(%llu)  alloc_list(%llu)\n", free_cnt, alloc_cnt); \
         printf("\n"); \
 }while (0)
 
 // ATTENTION !!!!!!
 // You can modify this to match your computer.
-#define MEM_SIZE (4*GB+500*MB)
-#define DATA_N 30000000
+#define MEM_SIZE (1*GB+500*MB)
+#define DATA_N 20000000
 
 #define uint unsigned int
 char *mem[DATA_N] = {0};
@@ -60,11 +60,10 @@ int main()
 #else
     printf("Memory Pool:\n");
     mem_size_t free_cnt = 0, alloc_cnt = 0;
-    MemoryPool *mp = MemoryPool_Init(MEM_SIZE);
-    printf("Memory Pool Size: %.4lf MB\n", (double)mp->mem_pool_size / 1024 / 1024);
+    MemoryPool *mp = MemoryPool_Init(MEM_SIZE, 1);
 #endif
 
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         printf("-------------------------\n");
 #ifdef _z_memorypool_h_
@@ -87,9 +86,11 @@ int main()
 
         for (int j = 0; j < cnt; ++j)
             My_Free(mem[j]);
+        // MemoryPool_Clear(mp);
 
 #ifdef _z_memorypool_h_
         SHOW("Free After: \n");
+        printf("Memory Pool Size: %.4lf MB\n", (double)mp->total_mem_pool_size / 1024 / 1024);
 #endif
         printf("total_size: %.4lf MB\n", (double)total_size/1024/1024);
     }

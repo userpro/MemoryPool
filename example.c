@@ -8,7 +8,7 @@ struct TAT
 
 int main()
 {
-    MemoryPool *mp = MemoryPool_Init(1*GB + 500*MB + 500*KB);
+    MemoryPool *mp = MemoryPool_Init(1*GB + 500*MB + 500*KB, 1);
     struct TAT *tat = (struct TAT *)MemoryPool_Alloc(mp, sizeof(struct TAT));
     tat->T_T = 2333;
     printf("%d\n", tat->T_T);
