@@ -58,14 +58,14 @@ double get_mempool_prog_usage(MemoryPool *mp);
 
 ## Tips
 
-- 可通过注释`main.c`里的`#include "memorypool.h"`来切换对比系统`malloc``free`和内存池
+- 可通过注释`main.c`里的`#include "memorypool.h"`来切换对比系统`malloc` `free`和内存池
 
 - 暂不支持多线程
 
 - 多食用`MemoryPool_Clear`
 
-- 在**2GB**数据量下比系统`malloc``free`平均快**30%-50%** (食用`MemoryPool_Clear`效果更明显)
+- 在**2GB**数据量下比系统`malloc` `free`平均快 **30%-50%** (食用`MemoryPool_Clear`效果更明显)
 
 - `mem_size_t`使用`unsigned long long`以支持4GB以上内存管理(头文件中`MAX_MEM_SIZE`宏定义了最大可管理内存)
 
-- 大量小块内存分配会有**20%-30%**内存空间损失(用于存储管理结构体 emmmmm)
+- 大量小块内存分配会有 **20%-30%** 内存空间损失(用于存储管理结构体 emmmmm)
