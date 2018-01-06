@@ -25,7 +25,7 @@
 
 // ATTENTION !!!!!!
 // You can modify this to match your computer.
-#define MEM_SIZE (1*GB+500*MB)
+#define MEM_SIZE (1*GB+50*MB)
 #define DATA_N 20000000
 
 #define uint unsigned int
@@ -44,13 +44,14 @@ uint random_uint(uint maxn)
 
 int main()
 {
+    _init();
     // -------- clock start ---------
     clock_t start, finish;
     double total_time;
     start = clock();
     // -------- clock start ----------
 #ifdef _z_memorypool_h_
-    mem_size_t total_size = 0, cur_size = 0, cnt = 0;
+    mem_size_t total_size = 0, cur_size = 0;
 #else
     unsigned long long total_size = 0, cur_size = 0, cnt = 0;
 #endif
@@ -70,21 +71,19 @@ int main()
         SHOW("Alloc Before: \n");
 #endif
 
-        total_size = 0; cnt = 0;
+        total_size = 0;
         for (int j = 0; j < DATA_N; ++j)
         {
             cur_size = random_uint(200);
             total_size += cur_size;
-            if (total_size >= MEM_SIZE) break;
             mem[j] = My_Malloc(cur_size);
-            cnt++;
         }
 
 #ifdef _z_memorypool_h_
         SHOW("Free Before: \n");
 #endif
 
-        for (int j = 0; j < cnt; ++j)
+        for (int j = 0; j < DATA_N; ++j)
             My_Free(mem[j]);
         // MemoryPool_Clear(mp);
 
