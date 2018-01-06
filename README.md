@@ -73,7 +73,7 @@ double get_mempool_prog_usage(MemoryPool *mp);
 
 ## Update
 
-- 增加了自动扩展 (内存池耗尽时自动新扩展一个mempoolsize大小的内存)
+- 18-1-7 12.53 增加了自动扩展 (内存池耗尽时自动新扩展一个mempoolsize大小的内存)
 
 ## Tips
 
