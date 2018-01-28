@@ -2,6 +2,8 @@
 
 一个极简内存池实现(基于First Fit算法, 可扩展)
 
+要一口气预分配大内存来管理(看了jemalloc和tcmalloc觉得自己真是naive :( )
+
 
 ## Example
 

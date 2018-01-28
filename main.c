@@ -25,7 +25,7 @@
 
 // ATTENTION !!!!!!
 // You can modify this to match your computer.
-#define MEM_SIZE (1*GB+50*MB)
+#define MEM_SIZE (GB + 500*MB)
 #define DATA_N 20000000
 
 #define uint unsigned int
