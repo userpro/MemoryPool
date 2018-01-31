@@ -108,12 +108,6 @@ typedef struct _mem_pool
 
 void get_memory_list_count(MemoryPool *mp, mem_size_t *free_list_len, mem_size_t *alloc_list_len);
 
-static bool merge_free_chunk(MemoryPool *mp, Memory *mm, Chunk *c);
-
-static Memory *find_memory_list(MemoryPool *mp, void *p);
-
-static Memory *extend_memory_list(MemoryPool *mp);
-
 /*
  *	内存池API
  */
