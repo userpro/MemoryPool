@@ -14,21 +14,33 @@
     #define My_Free(x)   free(x)
 #endif
 
+#ifdef _z_memorypool_h_
+    mem_size_t total_size = 0, cur_size = 0;
+#else
+    unsigned long long total_size = 0, cur_size = 0, cnt = 0;
+#endif
+
 #define SHOW(x) do { \
-        printf("->%s->> Memory Usage: %.4lf\n->> Memory Usage(prog): %.4lf\n", \
-            x, get_mempool_usage(mp), get_mempool_prog_usage(mp)); \
-        printf("->> "); \
-        get_memory_list_count(mp, &free_cnt, &alloc_cnt); \
-        printf("[list_count] free_list(%llu)  alloc_list(%llu)\n", free_cnt, alloc_cnt); \
-        printf("\n"); \
+    printf("-> %s\n->> Memory Usage: %.4lf\n->> Memory Usage(prog): %.4lf\n", \
+        x, get_mempool_usage(mp), get_mempool_prog_usage(mp)); \
+    get_memory_list_count(mp, &mlist_cnt); \
+    printf("->> [memorypool_list_count] mlist(%llu)\n", mlist_cnt); \
+    Memory *mlist = mp->mlist; \
+    while (mlist) \
+    { \
+        Memory *mm = mlist; \
+        get_every_memory_info(mlist, &free_cnt, &alloc_cnt); \
+        printf("->>> id: %d [list_count] free_list(%llu)  alloc_list(%llu)\n", get_memory_id(mlist), free_cnt, alloc_cnt); \
+        mlist = mlist->next; \
+    } \
+    printf("\n"); \
 }while (0)
 
-// ATTENTION !!!!!!
-// You can modify this to match your computer.
-#define MEM_SIZE (GB + 500*MB)
-#define DATA_N 20000000
-
+#define MEM_SIZE (50*MB)
+#define DATA_N 10
+#define DATA_MAX_SIZE (30*MB)
 #define uint unsigned int
+
 char *mem[DATA_N] = {0};
 
 void _init()
@@ -50,37 +62,35 @@ int main()
     double total_time;
     start = clock();
     // -------- clock start ----------
-#ifdef _z_memorypool_h_
-    mem_size_t total_size = 0, cur_size = 0;
-#else
-    unsigned long long total_size = 0, cur_size = 0, cnt = 0;
-#endif
 
+    // -------- pre --------
 #ifndef _z_memorypool_h_
     printf("System malloc:\n");
 #else
     printf("Memory Pool:\n");
-    mem_size_t free_cnt = 0, alloc_cnt = 0;
+    mem_size_t mlist_cnt = 0, free_cnt = 0, alloc_cnt = 0;
     MemoryPool *mp = MemoryPool_Init(MEM_SIZE, 1);
 #endif
+    // -------- pre --------
 
-    for (int i = 0; i < 4; ++i)
+    // -------- main --------
+    for (int i = 0; i < 3; ++i)
     {
         printf("-------------------------\n");
 #ifdef _z_memorypool_h_
-        SHOW("Alloc Before: \n");
+        SHOW("Alloc Before: ");
 #endif
 
         total_size = 0;
         for (int j = 0; j < DATA_N; ++j)
         {
-            cur_size = random_uint(200);
+            cur_size = random_uint(DATA_MAX_SIZE);
             total_size += cur_size;
             mem[j] = My_Malloc(cur_size);
         }
 
 #ifdef _z_memorypool_h_
-        SHOW("Free Before: \n");
+        SHOW("Free Before: ");
 #endif
 
         for (int j = 0; j < DATA_N; ++j)
@@ -88,12 +98,12 @@ int main()
         // MemoryPool_Clear(mp);
 
 #ifdef _z_memorypool_h_
-        SHOW("Free After: \n");
+        SHOW("Free After: ");
         printf("Memory Pool Size: %.4lf MB\n", (double)mp->total_mem_pool_size / 1024 / 1024);
 #endif
         printf("total_size: %.4lf MB\n", (double)total_size/1024/1024);
     }
-
+    // -------- main --------
 
     // -------- clock end ----------
     finish = clock();

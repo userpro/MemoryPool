@@ -4,8 +4,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-// #define MEM_DEBUG 1 // MemPool的调试开关 耗性能
-
 #define MAX_MEM_SIZE (16 * GB)
 
 #ifndef bool
@@ -55,25 +53,6 @@
 } while(0)
 
 
-#ifdef MEM_DEBUG
-	#include <stdio.h>
-	#define BEFORE(x, y) do { \
-		printf("\n[%s] before:  ", y); \
-		mem_size_t a,b; \
-		get_mempool_list_count(x, &a, &b); \
-		printf("free_list(%llu)  alloc_list(%llu)\n", a, b); \
-	} while(0)
-
-	#define AFTER(x, y) do { \
-		printf("[%s] after:  ", y); \
-		mem_size_t a,b; \
-		get_mempool_list_count(x, &a, &b); \
-		printf("free_list(%llu)  alloc_list(%llu)\n", a, b); \
-		printf("\n"); \
-	} while(0)
-#endif
-
-
 #define KB (mem_size_t)(1 << 10)
 #define MB (mem_size_t)(1 << 20)
 #define GB (mem_size_t)(1 << 30)
@@ -89,6 +68,7 @@ typedef struct _chunk
 typedef struct _mem_pool_list
 {
 	char *start;
+	int id;
 	mem_size_t alloc_mem;
 	mem_size_t alloc_prog_mem;
 	Chunk *free_list, *alloc_list;
@@ -97,6 +77,7 @@ typedef struct _mem_pool_list
 
 typedef struct _mem_pool
 {
+	int last_id;
 	mem_size_t mem_pool_size, total_mem_pool_size;
 	struct _mem_pool_list *mlist;
 	bool auto_extend;
@@ -106,7 +87,13 @@ typedef struct _mem_pool
  *	内部工具函数
  */
 
-void get_memory_list_count(MemoryPool *mp, mem_size_t *free_list_len, mem_size_t *alloc_list_len);
+// 所有Memory的数量
+void get_memory_list_count(MemoryPool *mp, mem_size_t *mlist_len);
+
+// 每个Memory的统计信息
+void get_every_memory_info(Memory *mm, mem_size_t *free_list_len, mem_size_t *alloc_list_len);
+
+int get_memory_id(Memory *mm);
 
 /*
  *	内存池API
@@ -126,8 +113,10 @@ bool MemoryPool_Destroy(MemoryPool *mp);
  *	获取内存池信息
  */
 
+// 实际分配空间
 double get_mempool_usage(MemoryPool *mp);
 
+// 真实使用空间
 double get_mempool_prog_usage(MemoryPool *mp);
 
 
