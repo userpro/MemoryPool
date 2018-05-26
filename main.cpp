@@ -1,7 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "memorypool.h"
+#include "memorypool.h" // 注释这行比较系统malloc与memory pool的性能
+#include <algorithm>
+
+// #define ENABLE_SHOW // 开启输出内部信息 会极大的影响性能
+// #define HARD_MODE // 该模式更接近随机分配释放内存的情景
+
+/* -------- 测试数据参数 -------- */
+#define MEM_SIZE (2*GB) // 内存池管理的每个内存块大小
+#define DATA_N 300000 // 数据条数
+#define DATA_MAX_SIZE (16*KB) // 每条数据最大尺寸
+#define MAX_N 3 // 总测试次数
+/* -------- 测试数据参数 -------- */
+
 
 #ifdef _z_memorypool_h_
     #define My_Malloc(x) MemoryPool_Alloc(mp, x)
@@ -29,29 +41,34 @@
     while (mlist) \
     { \
         Memory *mm = mlist; \
-        get_every_memory_info(mlist, &free_cnt, &alloc_cnt); \
+        get_memory_info(mlist, &free_cnt, &alloc_cnt); \
         printf("->>> id: %d [list_count] free_list(%llu)  alloc_list(%llu)\n", get_memory_id(mlist), free_cnt, alloc_cnt); \
         mlist = mlist->next; \
     } \
     printf("\n"); \
 }while (0)
 
-#define MEM_SIZE (50*MB)
-#define DATA_N 10
-#define DATA_MAX_SIZE (30*MB)
-#define uint unsigned int
+struct Node
+{
+    int size;
+    char *data;
+};
 
-char *mem[DATA_N] = {0};
-
+Node mem[DATA_N];
 void _init()
 {
     srand((unsigned)time(NULL));
 }
 
-uint random_uint(uint maxn)
+unsigned int random_uint(unsigned int maxn)
 {
-    uint ret = abs(rand()) % maxn;
+    unsigned int ret = abs(rand()) % maxn;
     return ret > 0 ? ret : 10;
+}
+
+bool _cmp(const Node &n1,const Node &n2)
+{
+    return n1.size<n2.size;
 }
 
 int main()
@@ -77,7 +94,7 @@ int main()
     for (int i = 0; i < 3; ++i)
     {
         printf("-------------------------\n");
-#ifdef _z_memorypool_h_
+#if (defined _z_memorypool_h_) && (defined ENABLE_SHOW)
         SHOW("Alloc Before: ");
 #endif
 
@@ -86,19 +103,39 @@ int main()
         {
             cur_size = random_uint(DATA_MAX_SIZE);
             total_size += cur_size;
-            mem[j] = My_Malloc(cur_size);
+            mem[j].data = (char *)My_Malloc(cur_size);
+            mem[j].size = cur_size;
         }
+        // 排序进一步打乱内存释放顺序 模拟实际中随机释放内存
+        std::sort(mem, mem + DATA_N, _cmp);
 
-#ifdef _z_memorypool_h_
+#ifdef HARD_MODE
+        // 释放前一半管理的内存
+        for (int j = 0; j < DATA_N/2; ++j)
+            My_Free(mem[j].data);
+        // 重新分配前一半的内存
+        for (int j = 0; j < DATA_N/2; ++j)
+        {
+            cur_size = random_uint(DATA_MAX_SIZE);
+            total_size += cur_size;
+            mem[j].data = (char *)My_Malloc(cur_size);
+            mem[j].size = cur_size;
+        }
+        std::sort(mem, mem + DATA_N, _cmp);
+#endif
+
+#if (defined _z_memorypool_h_) && (defined ENABLE_SHOW)
         SHOW("Free Before: ");
 #endif
 
         for (int j = 0; j < DATA_N; ++j)
-            My_Free(mem[j]);
+            My_Free(mem[j].data);
         // MemoryPool_Clear(mp);
 
 #ifdef _z_memorypool_h_
-        SHOW("Free After: ");
+        #ifdef ENABLE_SHOW 
+            SHOW("Free After: ");
+        #endif
         printf("Memory Pool Size: %.4lf MB\n", (double)mp->total_mem_pool_size / 1024 / 1024);
 #endif
         printf("total_size: %.4lf MB\n", (double)total_size/1024/1024);

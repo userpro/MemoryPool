@@ -77,6 +77,8 @@ double get_mempool_prog_usage(MemoryPool *mp);
 
 - 18-1-7 12.53 增加了自动扩展 (内存池耗尽时自动新扩展一个mempoolsize大小的内存)
 
+- 18-5-27 1.10 改进输出信息 增强测试程序(详见main.cpp)
+
 ## Tips
 
 - 可通过注释`main.c`里的`#include "memorypool.h"`来切换对比系统`malloc` `free`和内存池
@@ -85,7 +87,7 @@ double get_mempool_prog_usage(MemoryPool *mp);
 
 - 多食用`MemoryPool_Clear`
 
-- 在 **2GB** 数据量下比系统`malloc` `free`平均快 **30%-50%** (食用`MemoryPool_Clear`效果更明显)
+- 在 **2GB** 数据量 **顺序分配释放** 的情况下比系统`malloc` `free`平均快 **30%-50%** (食用`MemoryPool_Clear`效果更明显)
 
 - `mem_size_t`使用`unsigned long long`以支持4GB以上内存管理(头文件中`MAX_MEM_SIZE`宏定义了最大可管理内存)
 

@@ -1,12 +1,13 @@
 CC = gcc
+CPP = g++
 SOURCES = memorypool.c
-MAIN_SOURCES = main.c
+MAIN_SOURCES = main.cpp
 MAIN_OUTPUT = main
 EXAMPLE_SOURCES = example.c
 EXAMPLE_OUTPUT = example
 
 main:
-	$(CC) $(MAIN_SOURCES) $(SOURCES) -o $(MAIN_OUTPUT).out
+	$(CPP) $(MAIN_SOURCES) $(SOURCES) -o $(MAIN_OUTPUT).out
 	@echo "main ok!\n"
 
 example:

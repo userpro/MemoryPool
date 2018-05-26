@@ -13,7 +13,7 @@ void get_memory_list_count(MemoryPool *mp, mem_size_t *mlist_len)
 	*mlist_len = mlist_l;
 }
 
-void get_every_memory_info(Memory *mm, mem_size_t *free_list_len, mem_size_t *alloc_list_len)
+void get_memory_info(Memory *mm, mem_size_t *free_list_len, mem_size_t *alloc_list_len)
 {
 	mem_size_t free_l = 0, alloc_l = 0;
 	Chunk *p = mm->free_list;
