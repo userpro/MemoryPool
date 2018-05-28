@@ -76,7 +76,7 @@ static bool merge_free_chunk(MemoryPool *mp, Memory *mm, Chunk *c)
 		return 0;
 
 	Chunk *p0 = *(Chunk **)((char *)c - CHUNKEND), *p1 = c;
-	while ((char *)p0 >= mm->start && p0->is_free)
+	while ((char *)p0 > mm->start && p0->is_free)
 	{
 		p1 = p0;
 		p0 = *(Chunk **)((char *)p0 - CHUNKEND);
@@ -135,6 +135,9 @@ MemoryPool *MemoryPool_Init(mem_size_t mempoolsize, bool auto_extend)
 
 void *MemoryPool_Alloc(MemoryPool *mp, mem_size_t wantsize)
 {
+	if (wantsize > MAX_MEM_SIZE)
+		return NULL;
+	
 	mem_size_t total_needed_size = wantsize + CHUNKHEADER + CHUNKEND;
 	Memory *mm = NULL, *mm1 = NULL;
 	Chunk *_free = NULL, *_not_free = NULL;
