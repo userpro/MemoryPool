@@ -135,10 +135,9 @@ MemoryPool *MemoryPool_Init(mem_size_t mempoolsize, bool auto_extend)
 
 void *MemoryPool_Alloc(MemoryPool *mp, mem_size_t wantsize)
 {
-	if (wantsize > MAX_MEM_SIZE)
-		return NULL;
-	
 	mem_size_t total_needed_size = wantsize + CHUNKHEADER + CHUNKEND;
+	if (total_needed_size > MAX_MEM_SIZE) return NULL;
+
 	Memory *mm = NULL, *mm1 = NULL;
 	Chunk *_free = NULL, *_not_free = NULL;
 
