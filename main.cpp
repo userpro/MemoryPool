@@ -4,14 +4,16 @@
 #include "memorypool.h" // 注释这行比较系统malloc与memory pool的性能
 #include <algorithm>
 
-// #define ENABLE_SHOW // 开启输出内部信息 会极大的影响性能
-// #define HARD_MODE // 该模式更接近随机分配释放内存的情景
+// 开启ENABLE_SHOW输出内部信息 会极大的影响性能
+#define ENABLE_SHOW 
+// HARD_MODE模式更接近随机分配释放内存的情景, 测试代码Total Usage Size输出失效.
+// #define HARD_MODE 
 
 /* -------- 测试数据参数 -------- */
-#define MEM_SIZE (1*GB) // 内存池管理的每个内存块大小
-#define DATA_N 30000 // 数据条数
+#define MEM_SIZE (0.5*GB) // 内存池管理的每个内存块大小
+#define DATA_N   100000   // 数据条数
 #define DATA_MAX_SIZE (16*KB) // 每条数据最大尺寸
-#define MAX_N 3 // 总测试次数
+#define MAX_N    3        // 总测试次数
 /* -------- 测试数据参数 -------- */
 
 
@@ -128,7 +130,7 @@ int main()
         #endif
         printf("Memory Pool Size: %.4lf MB\n", (double)mp->total_mem_pool_size / 1024 / 1024);
 #endif
-        printf("total_size: %.4lf MB\n", (double)total_size/1024/1024);
+        printf("Total Usage Size: %.4lf MB\n", (double)total_size/1024/1024);
     }
 
     finish = clock();

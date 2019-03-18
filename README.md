@@ -2,7 +2,7 @@
 
 一个极简内存池实现(基于First Fit算法, 可扩展)
 
-要一口气预分配大内存来管理(看了jemalloc和tcmalloc觉得自己真是naive :( )
+要一口气预分配大内存来管理
 
 
 ## Example
@@ -39,7 +39,7 @@ int main()
 
 `mem_size_t` => `unsigned long long`
 
-`MemoryPool_Init` 参数(`mem_size_t mempoolsize`, `bool auto_extend`)
+`MemoryPool_Init` 参数(`mem_size_t mempoolsize`, `int auto_extend`)
 
 > `mempoolsize`: 内存池字节数
 
@@ -50,15 +50,15 @@ int main()
 `MemoryPool_Free` 行为与系统free一致(唔 多了个返回值)
 
 ~~~c
-MemoryPool *MemoryPool_Init(mem_size_t mempoolsize, bool auto_extend);
+MemoryPool *MemoryPool_Init(mem_size_t mempoolsize, int auto_extend);
 
 void *MemoryPool_Alloc(MemoryPool *mp, mem_size_t wantsize);
 
-bool MemoryPool_Free(MemoryPool *mp, void *p);
+int  MemoryPool_Free(MemoryPool *mp, void *p);
 
 MemoryPool *MemoryPool_Clear(MemoryPool *mp);
 
-bool MemoryPool_Destroy(MemoryPool *mp);
+int  MemoryPool_Destroy(MemoryPool *mp);
 ~~~
 
 - 获取内存池信息
@@ -76,8 +76,8 @@ double get_mempool_prog_usage(MemoryPool *mp);
 ## Update
 
 - 18-1-7 12.53 增加了自动扩展 (内存池耗尽时自动新扩展一个mempoolsize大小的内存)
-
 - 18-5-27 1.10 改进输出信息 增强测试程序(详见main.cpp)
+- 19-3-18 11.05 改进格式, 修复潜在bug
 
 ## Tips
 

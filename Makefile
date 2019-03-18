@@ -6,18 +6,12 @@ MAIN_OUTPUT = main
 EXAMPLE_SOURCES = example.c
 EXAMPLE_OUTPUT = example
 
-main:
-	$(CPP) $(MAIN_SOURCES) $(SOURCES) -o $(MAIN_OUTPUT).out
-	@echo "complie main ok!\n"
-
-example:
-	$(CC) $(EXAMPLE_SOURCES) $(SOURCES) -o $(EXAMPLE_OUTPUT).out
-	@echo "compile example ok!\n"
-
 run_main:
+	$(CPP) $(MAIN_SOURCES) $(SOURCES) -o $(MAIN_OUTPUT).out
 	./$(MAIN_OUTPUT).out
 
 run_example:
+	$(CC) $(EXAMPLE_SOURCES) $(SOURCES) -o $(EXAMPLE_OUTPUT).out
 	./$(EXAMPLE_OUTPUT).out
 
 .PHONY: clean
