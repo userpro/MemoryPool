@@ -93,15 +93,15 @@ int  get_memory_id(Memory *mm);
  *  内存池API
  */
 
-MemoryPool *MemoryPool_Init(mem_size_t mempoolsize, int auto_extend);
+MemoryPool* MemoryPool_Init   (mem_size_t mempoolsize, int auto_extend);
 
-void *MemoryPool_Alloc(MemoryPool *mp, mem_size_t wantsize);
+void*       MemoryPool_Alloc  (MemoryPool *mp, mem_size_t wantsize);
 
-int  MemoryPool_Free(MemoryPool *mp, void *p);
+int         MemoryPool_Free   (MemoryPool *mp, void *p);
 
-MemoryPool *MemoryPool_Clear(MemoryPool *mp);
+MemoryPool* MemoryPool_Clear  (MemoryPool *mp);
 
-int  MemoryPool_Destroy(MemoryPool *mp);
+int         MemoryPool_Destroy(MemoryPool *mp);
 
 /*
  *  获取内存池信息
