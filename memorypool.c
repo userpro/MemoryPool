@@ -221,6 +221,9 @@ FIND_FREE_CHUNK:
 
     if (mp->auto_extend)
     {
+        // 超过总内存限制
+        if (mp->total_mem_pool_size + mp->mem_pool_size > MAX_MEM_SIZE)
+            return NULL;
         mm1 = extend_memory_list(mp);
         if (!mm1)
             return NULL;
