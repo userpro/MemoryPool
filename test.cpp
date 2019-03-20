@@ -10,8 +10,9 @@
 // #define HARD_MODE 
 
 /* -------- 测试数据参数 -------- */
+#define MAX_MEM_SIZE (1*GB) // 内存池管理的每个内存块大小
 #define MEM_SIZE (0.5*GB) // 内存池管理的每个内存块大小
-#define DATA_N   100000   // 数据条数
+#define DATA_N   200000   // 数据条数
 #define DATA_MAX_SIZE (16*KB) // 每条数据最大尺寸
 #define MAX_N    3        // 总测试次数
 /* -------- 测试数据参数 -------- */
@@ -36,7 +37,6 @@
     Memory *mlist = mp->mlist; \
     while (mlist) \
     { \
-        Memory *mm = mlist; \
         get_memory_info(mlist, &free_cnt, &alloc_cnt); \
         printf("->>> id: %d [list_count] free_list(%llu)  alloc_list(%llu)\n", get_memory_id(mlist), free_cnt, alloc_cnt); \
         mlist = mlist->next; \
@@ -75,7 +75,7 @@ int main()
 #else
     printf("Memory Pool:\n");
     mem_size_t mlist_cnt = 0, free_cnt = 0, alloc_cnt = 0;
-    MemoryPool *mp = MemoryPool_Init(MEM_SIZE, 1);
+    MemoryPool *mp = MemoryPool_Init(MAX_MEM_SIZE, MEM_SIZE, 1);
 #endif
 
     for (int i = 0; i < 3; ++i)
@@ -91,6 +91,10 @@ int main()
             cur_size = random_uint(DATA_MAX_SIZE);
             total_size += cur_size;
             mem[j].data = (char *)My_Malloc(cur_size);
+            if (mem[j].data == NULL) {
+                printf("Memory overflow!\n");
+                break;
+            }
             mem[j].size = cur_size;
             *(int *)mem[j].data = 123;
         }
@@ -107,6 +111,10 @@ int main()
             cur_size = random_uint(DATA_MAX_SIZE);
             total_size += cur_size;
             mem[j].data = (char *)My_Malloc(cur_size);
+            if (mem[j].data == NULL) {
+                printf("Memory overflow!\n");
+                break;
+            }
             mem[j].size = cur_size;
             *(int *)mem[j].data = 456;
         }
@@ -120,6 +128,7 @@ int main()
         for (int j = 0; j < DATA_N; ++j) {
             // printf("%d ", *(int *)mem[j].data);
             My_Free(mem[j].data);
+            mem[j].data = NULL;
         }
         printf("\n");
         // MemoryPool_Clear(mp);

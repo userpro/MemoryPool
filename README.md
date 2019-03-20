@@ -16,9 +16,12 @@ struct TAT
     int T_T;
 };
 
+int max_mem = 2*GB + 1000*MB + 1000*KB;
+int mem_pool_size = 1*GB + 500*MB + 500*KB;
+
 int main()
 {
-    MemoryPool *mp = MemoryPool_Init(1*GB + 500*MB + 500*KB, 1); // Open auto extend
+    MemoryPool *mp = MemoryPool_Init(max_mem, mem_pool_size, 1);
     struct TAT *tat = (struct TAT *)MemoryPool_Alloc(mp, sizeof(struct TAT));
     tat->T_T = 2333;
     printf("%d\n", tat->T_T);
@@ -39,18 +42,18 @@ int main()
 
 `mem_size_t` => `unsigned long long`
 
-`MemoryPool_Init` 参数(`mem_size_t mempoolsize`, `int auto_extend`)
+`MemoryPool_Init` 参数(`mem_size_t max_mem_pool_size`, `mem_size_t mempoolsize`, `int auto_extend`)
 
 > `mempoolsize`: 内存池字节数
 
 > `auto_extend`: 是否自动扩展 (1->开启自动扩展 0->不开启)
 
-`MemoryPool_Alloc` 行为与系统malloc一致(唔 参数多一个)
+`MemoryPool_Alloc` 行为与系统malloc一致(唔 参数多了一个)
 
 `MemoryPool_Free` 行为与系统free一致(唔 多了个返回值)
 
 ~~~c
-MemoryPool *MemoryPool_Init(mem_size_t mempoolsize, int auto_extend);
+MemoryPool *MemoryPool_Init(mem_size_t max_mem_pool_size, mem_size_t mempoolsize, int auto_extend);
 
 void *MemoryPool_Alloc(MemoryPool *mp, mem_size_t wantsize);
 

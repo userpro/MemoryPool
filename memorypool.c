@@ -108,9 +108,9 @@ merge_free_chunk(MemoryPool *mp, Memory *mm, Chunk *c)
 }
 
 MemoryPool *
-MemoryPool_Init(mem_size_t mempoolsize, int auto_extend)
+MemoryPool_Init(mem_size_t maxmempoolsize, mem_size_t mempoolsize, int auto_extend)
 {
-    if (mempoolsize > MAX_MEM_SIZE)
+    if (mempoolsize > maxmempoolsize)
     {
         // printf("[MemoryPool_Init] MemPool Init ERROR! Mempoolsize is too big! \n");
         return NULL;
@@ -123,6 +123,7 @@ MemoryPool_Init(mem_size_t mempoolsize, int auto_extend)
         return NULL;
     }
 
+    mp->max_mem_pool_size   = maxmempoolsize;
     mp->total_mem_pool_size = mp->mem_pool_size = mempoolsize;
     mp->auto_extend = auto_extend;
     mp->last_id     = 0;
@@ -222,7 +223,7 @@ FIND_FREE_CHUNK:
     if (mp->auto_extend)
     {
         // 超过总内存限制
-        if (mp->total_mem_pool_size + mp->mem_pool_size > MAX_MEM_SIZE)
+        if (mp->total_mem_pool_size + mp->mem_pool_size > mp->max_mem_pool_size)
             return NULL;
         mm1 = extend_memory_list(mp);
         if (!mm1)

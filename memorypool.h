@@ -3,8 +3,6 @@
 
 #include <stdlib.h>
 
-#define MAX_MEM_SIZE (32 * GB)
-
 #ifndef mem_size_t
     #define mem_size_t unsigned long long
 #endif
@@ -73,7 +71,7 @@ typedef struct _mem_pool
 {
     unsigned int last_id;
     int          auto_extend;
-    mem_size_t   mem_pool_size, total_mem_pool_size;
+    mem_size_t   mem_pool_size, total_mem_pool_size, max_mem_pool_size;
     struct _mem_pool_list *mlist;
 }MemoryPool;
 
@@ -93,7 +91,7 @@ int  get_memory_id(Memory *mm);
  *  内存池API
  */
 
-MemoryPool* MemoryPool_Init   (mem_size_t mempoolsize, int auto_extend);
+MemoryPool* MemoryPool_Init   (mem_size_t max_mem_pool_size, mem_size_t mempoolsize, int auto_extend);
 
 void*       MemoryPool_Alloc  (MemoryPool *mp, mem_size_t wantsize);
 
