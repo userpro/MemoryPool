@@ -1,4 +1,5 @@
 #include "memorypool.h"
+#include <stdio.h>
 
 void 
 get_memory_list_count(MemoryPool *mp, mem_size_t *mlist_len)
@@ -79,13 +80,14 @@ find_memory_list(MemoryPool *mp, void *p)
 static int 
 merge_free_chunk(MemoryPool *mp, Memory *mm, Chunk *c)
 {
-    if (mp == NULL || mm == NULL || c == NULL)
+    if (mp == NULL || mm == NULL || c == NULL || !c->is_free)
         return 1;
 
     Chunk *p0 = c, *p1 = c;
-    if ((char *)c - CHUNKEND > mm->start) {
+    if ((char *)p0 > mm->start) {
         p0 = *(Chunk **)((char *)c - CHUNKEND);
-        p1 = p0;
+        if (p0->is_free)
+            p1 = p0;
     }
     while ((char *)p0 > mm->start && p0->is_free)
     {
@@ -97,13 +99,11 @@ merge_free_chunk(MemoryPool *mp, Memory *mm, Chunk *c)
     while ((char *)p0 < mm->start + mp->mem_pool_size && p0->is_free)
     {
         dlinklist_delete(mm->free_list, p0);
-
         p1->alloc_mem += p0->alloc_mem;
         p0 = (Chunk *)((char *)p0 + p0->alloc_mem);
     }
 
     *(Chunk **)((char *)p1 + p1->alloc_mem - CHUNKEND) = p1;
-
     return 0;
 }
 
@@ -176,11 +176,10 @@ FIND_FREE_CHUNK:
                 if (_free->alloc_mem - total_needed_size > CHUNKHEADER + CHUNKEND)
                 {
                     // 从free块头开始分割出alloc块
-                    // nf指向分割后的free块
                     _not_free = _free;
 
-                    _free = (Chunk *)((char *)_not_free + total_needed_size);
-                    *_free    = *_not_free;
+                    _free   = (Chunk *)((char *)_not_free + total_needed_size);
+                    *_free  = *_not_free;
                     _free->alloc_mem -= total_needed_size;
                     *(Chunk **)((char *)_free + _free->alloc_mem - CHUNKEND) = _free;
                     
@@ -251,6 +250,9 @@ MemoryPool_Free(MemoryPool *mp, void *p)
     dlinklist_insert_front(mm->free_list, ck);
     ck->is_free = 1;
 
+    if (mm->alloc_mem < ck->alloc_mem) {
+        printf("%llu %llu\n", mm->alloc_mem, ck->alloc_mem);
+    }
     mm->alloc_mem      -= ck->alloc_mem;
     mm->alloc_prog_mem -= (ck->alloc_mem - CHUNKHEADER - CHUNKEND);
 
@@ -308,7 +310,7 @@ get_mempool_usage(MemoryPool *mp)
         total_alloc += mm->alloc_mem;
         mm = mm->next;
     }
-    return (double)total_alloc / mp->total_mem_pool_size;
+    return (double)total_alloc / (double)mp->total_mem_pool_size;
 }
 
 double 
@@ -321,6 +323,6 @@ get_mempool_prog_usage(MemoryPool *mp)
         total_alloc_prog += mm->alloc_prog_mem;
         mm = mm->next;
     }
-    return (double)total_alloc_prog / mp->total_mem_pool_size;
+    return (double)total_alloc_prog / (double)mp->total_mem_pool_size;
 }
 

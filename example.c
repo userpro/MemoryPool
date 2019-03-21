@@ -6,8 +6,8 @@ struct TAT
     int T_T;
 };
 
-int max_mem = 2*GB + 1000*MB + 1000*KB;
-int mem_pool_size = 1*GB + 500*MB + 500*KB;
+mem_size_t max_mem = 2*GB + 1000*MB + 1000*KB;
+mem_size_t mem_pool_size = 1*GB + 500*MB + 500*KB;
 
 int main()
 {

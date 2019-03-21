@@ -10,11 +10,11 @@
 // #define HARD_MODE 
 
 /* -------- 测试数据参数 -------- */
-#define MAX_MEM_SIZE (1*GB) // 内存池管理的每个内存块大小
-#define MEM_SIZE (0.5*GB) // 内存池管理的每个内存块大小
-#define DATA_N   200000   // 数据条数
-#define DATA_MAX_SIZE (16*KB) // 每条数据最大尺寸
-#define MAX_N    3        // 总测试次数
+#define MAX_MEM_SIZE  (2*GB)   // 内存池管理的每个内存块大小
+#define MEM_SIZE      (0.5*GB) // 内存池管理的每个内存块大小
+#define DATA_N        (200000) // 数据条数
+#define DATA_MAX_SIZE (16*KB)  // 每条数据最大尺寸
+#define MAX_N         (3)      // 总测试次数
 /* -------- 测试数据参数 -------- */
 
 

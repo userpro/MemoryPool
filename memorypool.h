@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 #ifndef mem_size_t
-    #define mem_size_t unsigned long long
+    #define mem_size_t  unsigned long long
 #endif
 
 #ifndef CHUNKHEADER
@@ -12,7 +12,7 @@
 #endif
 
 #ifndef CHUNKEND
-    #define CHUNKEND sizeof(struct _chunk *)
+    #define CHUNKEND    sizeof(struct _chunk *)
 #endif
 
 

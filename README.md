@@ -53,15 +53,15 @@ int main()
 `MemoryPool_Free` 行为与系统free一致(唔 多了个返回值)
 
 ~~~c
-MemoryPool *MemoryPool_Init(mem_size_t max_mem_pool_size, mem_size_t mempoolsize, int auto_extend);
+MemoryPool* MemoryPool_Init(mem_size_t max_mem_pool_size, mem_size_t mempoolsize, int auto_extend);
 
-void *MemoryPool_Alloc(MemoryPool *mp, mem_size_t wantsize);
+void* MemoryPool_Alloc(MemoryPool *mp, mem_size_t wantsize);
 
-int  MemoryPool_Free(MemoryPool *mp, void *p);
+int   MemoryPool_Free(MemoryPool *mp, void *p);
 
-MemoryPool *MemoryPool_Clear(MemoryPool *mp);
+MemoryPool* MemoryPool_Clear(MemoryPool *mp);
 
-int  MemoryPool_Destroy(MemoryPool *mp);
+int   MemoryPool_Destroy(MemoryPool *mp);
 ~~~
 
 - 获取内存池信息
@@ -84,7 +84,7 @@ double get_mempool_prog_usage(MemoryPool *mp);
 
 ## Tips
 
-- 可通过注释`main.c`里的`#include "memorypool.h"`来切换对比系统`malloc` `free`和内存池
+- 可通过注释`test.c`里的`#include "memorypool.h"`来切换对比系统`malloc` `free`和内存池
 
 - 暂不支持多线程
 
