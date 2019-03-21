@@ -250,9 +250,6 @@ MemoryPool_Free(MemoryPool *mp, void *p)
     dlinklist_insert_front(mm->free_list, ck);
     ck->is_free = 1;
 
-    if (mm->alloc_mem < ck->alloc_mem) {
-        printf("%llu %llu\n", mm->alloc_mem, ck->alloc_mem);
-    }
     mm->alloc_mem      -= ck->alloc_mem;
     mm->alloc_prog_mem -= (ck->alloc_mem - CHUNKHEADER - CHUNKEND);
 
@@ -263,10 +260,7 @@ MemoryPool *
 MemoryPool_Clear(MemoryPool *mp)
 {
     if (mp == NULL)
-    {
-        // printf("[MemoryPool_Clear] Memory Pool is NULL! \n");
         return NULL;
-    }
 
     Memory *mm = mp->mlist;
     while (mm)
@@ -282,10 +276,7 @@ int
 MemoryPool_Destroy(MemoryPool *mp)
 {
     if (mp == NULL)
-    {
-        // printf("[MemoryPool_Destroy] Memory Pool is NULL! \n");
         return 1;
-    }
 
     Memory *mm = mp->mlist, *mm1 = NULL;
     while (mm)
