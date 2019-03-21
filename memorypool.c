@@ -1,5 +1,4 @@
 #include "memorypool.h"
-#include <stdio.h>
 
 void 
 get_memory_list_count(MemoryPool *mp, mem_size_t *mlist_len)
