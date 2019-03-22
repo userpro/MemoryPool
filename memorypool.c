@@ -83,14 +83,11 @@ merge_free_chunk(MemoryPool *mp, Memory *mm, Chunk *c)
         return 1;
 
     Chunk *p0 = c, *p1 = c;
-    if ((char *)p0 > mm->start) {
-        p0 = *(Chunk **)((char *)c - CHUNKEND);
-        if (p0->is_free)
-            p1 = p0;
-    }
-    while ((char *)p0 > mm->start && p0->is_free)
+    while (p0->is_free)
     {
         p1 = p0;
+        if ((char *)p0 - CHUNKEND - CHUNKHEADER <= mm->start)
+            break;
         p0 = *(Chunk **)((char *)p0 - CHUNKEND);
     }
 
