@@ -1,5 +1,6 @@
 CC = gcc
 CPP = g++
+GCCFLAG = -Wall -lpthread
 SOURCES = memorypool.c
 MAIN_SOURCES = test.cpp
 MAIN_OUTPUT = test
@@ -7,11 +8,11 @@ EXAMPLE_SOURCES = example.c
 EXAMPLE_OUTPUT = example
 
 run_test:
-	$(CPP) -Wall $(MAIN_SOURCES) $(SOURCES) -o $(MAIN_OUTPUT).out
+	$(CPP) $(GCCFLAG) $(MAIN_SOURCES) $(SOURCES) -o $(MAIN_OUTPUT).out
 	./$(MAIN_OUTPUT).out
 
 run_example:
-	$(CC)  -Wall $(EXAMPLE_SOURCES) $(SOURCES) -o $(EXAMPLE_OUTPUT).out
+	$(CC)  $(GCCFLAG) $(EXAMPLE_SOURCES) $(SOURCES) -o $(EXAMPLE_OUTPUT).out
 	./$(EXAMPLE_OUTPUT).out
 
 .PHONY: clean

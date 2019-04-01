@@ -1,72 +1,65 @@
 #include "memorypool.h"
 
 void 
-get_memory_list_count(MemoryPool *mp, mem_size_t *mlist_len)
-{
+get_memory_list_count(MemoryPool *mp, mem_size_t *mlist_len) {
+    MP_LOCK(mp->thread_safe, mp);
     mem_size_t mlist_l = 0;
-    Memory *mm = mp->mlist;
-    while (mm)
-    {
+    _Memory *mm = mp->mlist;
+    while (mm) {
         mlist_l++;
         mm = mm->next;
     }
-
+    MP_UNLOCK(mp->thread_safe, mp);
     *mlist_len = mlist_l;
 }
 
 void 
-get_memory_info(Memory *mm, mem_size_t *free_list_len, mem_size_t *alloc_list_len)
-{
+get_memory_info(MemoryPool *mp, _Memory *mm, mem_size_t *free_list_len, mem_size_t *alloc_list_len) {
+    MP_LOCK(mp->thread_safe, mp);
     mem_size_t free_l = 0, alloc_l = 0;
-    Chunk *p = mm->free_list;
-    while (p)
-    {
+    _Chunk *p = mm->free_list;
+    while (p) {
         free_l++;
         p = p->next;
     }
 
     p = mm->alloc_list;
-    while (p)
-    {
+    while (p) {
         alloc_l++;
         p = p->next;
     }
-
+    MP_UNLOCK(mp->thread_safe, mp);
     *free_list_len  = free_l;
     *alloc_list_len = alloc_l;
 }
 
 int 
-get_memory_id(Memory *mm)
-{
+get_memory_id(_Memory *mm) {
     return mm->id;
 }
 
 
-static Memory *
-extend_memory_list(MemoryPool *mp)
-{
-    Memory *mm = (Memory *)malloc(sizeof(Memory));
-    if (!mm)
-        return NULL;
+static _Memory *
+extend_memory_list(MemoryPool *mp, mem_size_t new_mem_sz) {
+    char *s = (char *)malloc(sizeof(_Memory) 
+            + new_mem_sz * sizeof(char));
+    if (!s) return NULL;
 
-    mm->start = (char *)malloc(mp->mem_pool_size * sizeof(char));
-    if (!mm->start)
-        return NULL;
+    _Memory *mm = (_Memory *)s;
+    mm->start = s + sizeof(_Memory);
 
-    init_Memory(mm);
+    MP_INIT_MEMORY_STRUCT(mm, new_mem_sz);
     mm->id    = mp->last_id++;
     mm->next  = mp->mlist;
     mp->mlist = mm;
+    // pthread_mutex_init(&mp->mlist->lock, NULL);
     return mm;
 }
 
-static Memory *
-find_memory_list(MemoryPool *mp, void *p)
-{
-    Memory *tmp = mp->mlist;
-    while (tmp)
-    {
+static _Memory *
+find_memory_list(MemoryPool *mp, void *p) {
+    _Memory *tmp = mp->mlist;
+    while (tmp) {
         if (tmp->start <= (char *)p 
             && tmp->start + mp->mem_pool_size > (char *)p)
             break;
@@ -77,67 +70,58 @@ find_memory_list(MemoryPool *mp, void *p)
 }
 
 static int 
-merge_free_chunk(MemoryPool *mp, Memory *mm, Chunk *c)
-{
+merge_free_chunk(MemoryPool *mp, _Memory *mm, _Chunk *c) {
     if (mp == NULL || mm == NULL || c == NULL || !c->is_free)
         return 1;
 
-    Chunk *p0 = c, *p1 = c;
-    while (p0->is_free)
-    {
+    _Chunk *p0 = c, *p1 = c;
+    while (p0->is_free) {
         p1 = p0;
-        if ((char *)p0 - CHUNKEND - CHUNKHEADER <= mm->start)
+        if ((char *)p0 - MP_CHUNKEND - MP_CHUNKHEADER <= mm->start)
             break;
-        p0 = *(Chunk **)((char *)p0 - CHUNKEND);
+        p0 = *(_Chunk **)((char *)p0 - MP_CHUNKEND);
     }
 
-    p0 = (Chunk *)((char *)p1 + p1->alloc_mem);
-    while ((char *)p0 < mm->start + mp->mem_pool_size && p0->is_free)
-    {
-        dlinklist_delete(mm->free_list, p0);
+    p0 = (_Chunk *)((char *)p1 + p1->alloc_mem);
+    while ((char *)p0 < mm->start + mp->mem_pool_size && p0->is_free) {
+        MP_DLINKLIST_DEL(mm->free_list, p0);
         p1->alloc_mem += p0->alloc_mem;
-        p0 = (Chunk *)((char *)p0 + p0->alloc_mem);
+        p0 = (_Chunk *)((char *)p0 + p0->alloc_mem);
     }
 
-    *(Chunk **)((char *)p1 + p1->alloc_mem - CHUNKEND) = p1;
+    *(_Chunk **)((char *)p1 + p1->alloc_mem - MP_CHUNKEND) = p1;
+    MP_UNLOCK(mp->thread_safe, mp);
     return 0;
 }
 
 MemoryPool *
-MemoryPool_Init(mem_size_t maxmempoolsize, mem_size_t mempoolsize, int auto_extend)
-{
-    if (mempoolsize > maxmempoolsize)
-    {
+MemoryPool_Init(mem_size_t maxmempoolsize, mem_size_t mempoolsize, int thread_safe) {
+    if (mempoolsize > maxmempoolsize) {
         // printf("[MemoryPool_Init] MemPool Init ERROR! Mempoolsize is too big! \n");
         return NULL;
     }
 
     MemoryPool *mp = (MemoryPool *)malloc(sizeof(MemoryPool));
-    if (!mp)
-    {
-        // printf("[MemoryPool_Init] Alloc memorypool struct error!\n");
-        return NULL;
-    }
+    if (!mp) return NULL;
 
+    mp->last_id = 0;
+    if (mempoolsize < maxmempoolsize) 
+        mp->auto_extend = 1;
+    mp->thread_safe = thread_safe;
     mp->max_mem_pool_size   = maxmempoolsize;
     mp->total_mem_pool_size = mp->mem_pool_size = mempoolsize;
-    mp->auto_extend = auto_extend;
-    mp->last_id     = 0;
+    pthread_mutex_init(&mp->lock, NULL);
 
-    mp->mlist = (Memory*)malloc(sizeof(Memory));
-    if (!mp->mlist)
-        return NULL;
+    char *s = (char *)malloc(sizeof(_Memory) 
+            + sizeof(char) * mp->mem_pool_size);
+    if (!s) return NULL;
 
-    char *s = (char *)malloc(sizeof(char) * mp->mem_pool_size); // memory pool
-    if (!s)
-    {
-        // printf("[MemoryPool_Init] No memory! \n");
-        return NULL;
-    }
-    mp->mlist->start = s;
-    init_Memory(mp->mlist);
+    mp->mlist = (_Memory *)s;
+    mp->mlist->start = s + sizeof(_Memory);
+    MP_INIT_MEMORY_STRUCT(mp->mlist, mp->mem_pool_size);
     mp->mlist->next = NULL;
     mp->mlist->id   = mp->last_id++;
+    // pthread_mutex_init(&mp->mlist->lock, NULL);
 
     return mp;
 }
@@ -145,18 +129,17 @@ MemoryPool_Init(mem_size_t maxmempoolsize, mem_size_t mempoolsize, int auto_exte
 void *
 MemoryPool_Alloc(MemoryPool *mp, mem_size_t wantsize)
 {
-    mem_size_t total_needed_size = wantsize + CHUNKHEADER + CHUNKEND;
+    mem_size_t total_needed_size = MP_ALIGN_SIZE(wantsize + MP_CHUNKHEADER + MP_CHUNKEND);
     if (total_needed_size > mp->mem_pool_size) return NULL;
 
-    Memory *mm    = NULL, *mm1       = NULL;
-    Chunk  *_free = NULL, *_not_free = NULL;
+    _Memory *mm    = NULL, *mm1       = NULL;
+    _Chunk  *_free = NULL, *_not_free = NULL;
 
+    MP_LOCK(mp->thread_safe, mp);
 FIND_FREE_CHUNK:
     mm = mp->mlist;
-    while (mm)
-    {
-        if (mp->mem_pool_size - mm->alloc_mem < total_needed_size)
-        {
+    while (mm) {
+        if (mp->mem_pool_size - mm->alloc_mem < total_needed_size) {
             mm = mm->next;
             continue;
         }
@@ -164,24 +147,20 @@ FIND_FREE_CHUNK:
         _free = mm->free_list;
         _not_free = NULL;
 
-        while (_free)
-        {
-            if (_free->alloc_mem >= total_needed_size)
-            {
+        while (_free) {
+            if (_free->alloc_mem >= total_needed_size) {
                 // 如果free块分割后剩余内存足够大 则进行分割
-                if (_free->alloc_mem - total_needed_size > CHUNKHEADER + CHUNKEND)
-                {
+                if (_free->alloc_mem - total_needed_size > MP_CHUNKHEADER + MP_CHUNKEND) {
                     // 从free块头开始分割出alloc块
                     _not_free = _free;
 
-                    _free   = (Chunk *)((char *)_not_free + total_needed_size);
+                    _free   = (_Chunk *)((char *)_not_free + total_needed_size);
                     *_free  = *_not_free;
                     _free->alloc_mem -= total_needed_size;
-                    *(Chunk **)((char *)_free + _free->alloc_mem - CHUNKEND) = _free;
+                    *(_Chunk **)((char *)_free + _free->alloc_mem - MP_CHUNKEND) = _free;
                     
                     // update free_list
-                    if (!_free->prev)
-                    {
+                    if (!_free->prev) {
                         mm->free_list = _free;
                         if (_free->next) _free->next->prev = _free;
                     } else {
@@ -192,22 +171,21 @@ FIND_FREE_CHUNK:
                     _not_free->is_free   = 0;
                     _not_free->alloc_mem = total_needed_size;
 
-                    *(Chunk **)((char *)_not_free + total_needed_size - CHUNKEND) = _not_free;
+                    *(_Chunk **)((char *)_not_free + total_needed_size - MP_CHUNKEND) = _not_free;
                 }
                 // 不够 则整块分配为alloc
-                else
-                {
+                else {
                     _not_free = _free;
-                    dlinklist_delete(mm->free_list, _not_free);
+                    MP_DLINKLIST_DEL(mm->free_list, _not_free);
                     _not_free->is_free = 0;
                 }
-
-                dlinklist_insert_front(mm->alloc_list, _not_free);
+                MP_DLINKLIST_INS_FRT(mm->alloc_list, _not_free);
 
                 mm->alloc_mem      += _not_free->alloc_mem;
-                mm->alloc_prog_mem += (_not_free->alloc_mem - CHUNKHEADER - CHUNKEND);
+                mm->alloc_prog_mem += (_not_free->alloc_mem - MP_CHUNKHEADER - MP_CHUNKEND);
 
-                return (void *)((char *)_not_free + CHUNKHEADER);
+                MP_UNLOCK(mp->thread_safe, mp);
+                return (void *)((char *)_not_free + MP_CHUNKHEADER);
             }
             _free = _free->next;
         }
@@ -215,19 +193,21 @@ FIND_FREE_CHUNK:
         mm = mm->next;
     }
 
-    if (mp->auto_extend)
-    {
+    if (mp->auto_extend) {
         // 超过总内存限制
-        if (mp->total_mem_pool_size + mp->mem_pool_size > mp->max_mem_pool_size)
+        if (mp->total_mem_pool_size >= mp->max_mem_pool_size)
             return NULL;
-        mm1 = extend_memory_list(mp);
-        if (!mm1)
-            return NULL;
-        mp->total_mem_pool_size += mp->mem_pool_size;
+        mem_size_t add_mem_sz = mp->max_mem_pool_size - mp->mem_pool_size;
+        add_mem_sz = add_mem_sz >= mp->mem_pool_size ? mp->mem_pool_size : add_mem_sz;
+        mm1 = extend_memory_list(mp, add_mem_sz);
+        if (!mm1) return NULL;
+        mp->total_mem_pool_size += add_mem_sz;
+        
         goto FIND_FREE_CHUNK;
     }
 
     // printf("[MemoryPool_Alloc] No enough memory! \n");
+    MP_UNLOCK(mp->thread_safe, mp);
     return NULL;
 }
 
@@ -236,80 +216,87 @@ MemoryPool_Free(MemoryPool *mp, void *p)
 {
     if (p == NULL || mp == NULL)
         return 1;
-
-    Memory *mm = mp->mlist;
+    MP_LOCK(mp->thread_safe, mp);
+    _Memory *mm = mp->mlist;
     if (mp->auto_extend)
         mm = find_memory_list(mp, p);
 
-    Chunk *ck = (Chunk *)((char *)p - CHUNKHEADER);
-    dlinklist_delete(mm->alloc_list, ck);
-    dlinklist_insert_front(mm->free_list, ck);
+    _Chunk *ck = (_Chunk *)((char *)p - MP_CHUNKHEADER);
+    
+    MP_DLINKLIST_DEL(mm->alloc_list, ck);
+    MP_DLINKLIST_INS_FRT(mm->free_list,  ck);
     ck->is_free = 1;
 
     mm->alloc_mem      -= ck->alloc_mem;
-    mm->alloc_prog_mem -= (ck->alloc_mem - CHUNKHEADER - CHUNKEND);
+    mm->alloc_prog_mem -= (ck->alloc_mem - MP_CHUNKHEADER - MP_CHUNKEND);
 
     return merge_free_chunk(mp, mm, ck);
 }
 
 MemoryPool *
-MemoryPool_Clear(MemoryPool *mp)
-{
-    if (mp == NULL)
-        return NULL;
-
-    Memory *mm = mp->mlist;
-    while (mm)
-    {
-        init_Memory(mm);
+MemoryPool_Clear(MemoryPool *mp) {
+    if (!mp) return NULL;
+    MP_LOCK(mp->thread_safe, mp);
+    _Memory *mm = mp->mlist;
+    while (mm) {
+        MP_INIT_MEMORY_STRUCT(mm, mm->mem_pool_size);
         mm = mm->next;
     }
-
+    MP_UNLOCK(mp->thread_safe, mp);
     return mp;
 }
 
 int 
-MemoryPool_Destroy(MemoryPool *mp)
-{
-    if (mp == NULL)
-        return 1;
-
-    Memory *mm = mp->mlist, *mm1 = NULL;
-    while (mm)
-    {
-        free(mm->start);
+MemoryPool_Destroy(MemoryPool *mp) {
+    if (mp == NULL) return 1;
+    MP_LOCK(mp->thread_safe, mp);
+    _Memory *mm = mp->mlist, *mm1 = NULL;
+    while (mm) {
         mm1 = mm;
         mm  = mm->next;
+        // pthread_mutex_destroy(&mm1->lock);
         free(mm1);
     }
+    MP_UNLOCK(mp->thread_safe, mp);
+    pthread_mutex_destroy(&mp->lock);
     free(mp);
 
     return 0;
 }
 
-double 
-get_mempool_usage(MemoryPool *mp)
-{
+mem_size_t
+get_used_memory(MemoryPool *mp) {
+    MP_LOCK(mp->thread_safe, mp);
     mem_size_t total_alloc = 0;
-    Memory *mm = mp->mlist;
-    while (mm)
-    {
+    _Memory *mm = mp->mlist;
+    while (mm) {
         total_alloc += mm->alloc_mem;
         mm = mm->next;
     }
-    return (double)total_alloc / (double)mp->total_mem_pool_size;
+    MP_UNLOCK(mp->thread_safe, mp);
+    return total_alloc;
 }
 
-double 
-get_mempool_prog_usage(MemoryPool *mp)
-{
+mem_size_t
+get_prog_memory(MemoryPool *mp) {
+    MP_LOCK(mp->thread_safe, mp);
     mem_size_t total_alloc_prog = 0;
-    Memory *mm = mp->mlist;
-    while (mm)
-    {
+    _Memory *mm = mp->mlist;
+    while (mm) {
         total_alloc_prog += mm->alloc_prog_mem;
         mm = mm->next;
     }
-    return (double)total_alloc_prog / (double)mp->total_mem_pool_size;
+    MP_UNLOCK(mp->thread_safe, mp);
+    return total_alloc_prog;
+}
+
+float 
+get_mempool_usage(MemoryPool *mp) {
+    return (float)get_used_memory(mp) / mp->total_mem_pool_size;
+}
+
+float 
+get_mempool_prog_usage(MemoryPool *mp) {
+    return (float)get_prog_memory(mp) / mp->total_mem_pool_size;
 }
 
