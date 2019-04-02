@@ -4,8 +4,8 @@
 #include <pthread.h>
 
 #define mem_size_t  unsigned long long
-#define MP_CHUNKHEADER sizeof(struct _chunk)
-#define MP_CHUNKEND    sizeof(struct _chunk *)
+#define MP_CHUNKHEADER sizeof(struct _mp_chunk)
+#define MP_CHUNKEND    sizeof(struct _mp_chunk *)
 
 #define KB (mem_size_t)(1 << 10)
 #define MB (mem_size_t)(1 << 20)
@@ -24,7 +24,7 @@
     mm->mem_pool_size = mem_sz; \
     mm->alloc_mem = 0; \
     mm->alloc_prog_mem = 0; \
-    mm->free_list = (_Chunk *)mm->start; \
+    mm->free_list = (_MP_Chunk *)mm->start; \
     mm->free_list->is_free = 1; \
     mm->free_list->alloc_mem = mem_sz; \
     mm->free_list->prev = NULL; \
@@ -50,44 +50,44 @@
     } \
 } while(0)
 
-typedef struct _chunk
+typedef struct _mp_chunk
 {
     mem_size_t alloc_mem;
-    struct _chunk *prev, *next;
+    struct _mp_chunk *prev, *next;
     int is_free;
-} _Chunk;
+} _MP_Chunk;
 
-typedef struct _mem_pool_list
+typedef struct _mp_mem_pool_list
 {
     char *start;
     unsigned int    id;
     mem_size_t mem_pool_size;
     mem_size_t alloc_mem;
     mem_size_t alloc_prog_mem;
-    _Chunk *free_list, *alloc_list;
-    struct _mem_pool_list *next;
+    _MP_Chunk *free_list, *alloc_list;
+    struct _mp_mem_pool_list *next;
     // pthread_mutex_t lock;
-} _Memory;
+} _MP_Memory;
 
-typedef struct _mem_pool
+typedef struct _mp_mem_pool
 {
     unsigned int last_id;
     int          auto_extend;
     int          thread_safe;
     mem_size_t   mem_pool_size, total_mem_pool_size, max_mem_pool_size;
-    struct _mem_pool_list *mlist;
+    struct _mp_mem_pool_list *mlist;
     pthread_mutex_t lock;
 } MemoryPool;
 
 /*
- *  内部工具函数
+ *  内部工具函数(调试用)
  */
 
 // 所有Memory的数量
 void get_memory_list_count(MemoryPool *mp, mem_size_t *mlist_len);
 // 每个Memory的统计信息
-void get_memory_info(MemoryPool *mp, _Memory *mm, mem_size_t *free_list_len, mem_size_t *alloc_list_len);
-int  get_memory_id(_Memory *mm);
+void get_memory_info(MemoryPool *mp, _MP_Memory *mm, mem_size_t *free_list_len, mem_size_t *alloc_list_len);
+int  get_memory_id(_MP_Memory *mm);
 
 /*
  *  内存池API
@@ -98,6 +98,7 @@ void*       MemoryPool_Alloc  (MemoryPool *mp, mem_size_t wantsize);
 int         MemoryPool_Free   (MemoryPool *mp, void *p);
 MemoryPool* MemoryPool_Clear  (MemoryPool *mp);
 int         MemoryPool_Destroy(MemoryPool *mp);
+int         MemoryPool_SetThreadSafe(MemoryPool *mp, int thread_safe);
 
 /*
  *  内存池信息API

@@ -4,7 +4,7 @@ void
 get_memory_list_count(MemoryPool *mp, mem_size_t *mlist_len) {
     MP_LOCK(mp->thread_safe, mp);
     mem_size_t mlist_l = 0;
-    _Memory *mm = mp->mlist;
+    _MP_Memory *mm = mp->mlist;
     while (mm) {
         mlist_l++;
         mm = mm->next;
@@ -14,10 +14,10 @@ get_memory_list_count(MemoryPool *mp, mem_size_t *mlist_len) {
 }
 
 void 
-get_memory_info(MemoryPool *mp, _Memory *mm, mem_size_t *free_list_len, mem_size_t *alloc_list_len) {
+get_memory_info(MemoryPool *mp, _MP_Memory *mm, mem_size_t *free_list_len, mem_size_t *alloc_list_len) {
     MP_LOCK(mp->thread_safe, mp);
     mem_size_t free_l = 0, alloc_l = 0;
-    _Chunk *p = mm->free_list;
+    _MP_Chunk *p = mm->free_list;
     while (p) {
         free_l++;
         p = p->next;
@@ -34,19 +34,19 @@ get_memory_info(MemoryPool *mp, _Memory *mm, mem_size_t *free_list_len, mem_size
 }
 
 int 
-get_memory_id(_Memory *mm) {
+get_memory_id(_MP_Memory *mm) {
     return mm->id;
 }
 
 
-static _Memory *
+static _MP_Memory *
 extend_memory_list(MemoryPool *mp, mem_size_t new_mem_sz) {
-    char *s = (char *)malloc(sizeof(_Memory) 
+    char *s = (char *)malloc(sizeof(_MP_Memory) 
             + new_mem_sz * sizeof(char));
     if (!s) return NULL;
 
-    _Memory *mm = (_Memory *)s;
-    mm->start = s + sizeof(_Memory);
+    _MP_Memory *mm = (_MP_Memory *)s;
+    mm->start = s + sizeof(_MP_Memory);
 
     MP_INIT_MEMORY_STRUCT(mm, new_mem_sz);
     mm->id    = mp->last_id++;
@@ -56,9 +56,9 @@ extend_memory_list(MemoryPool *mp, mem_size_t new_mem_sz) {
     return mm;
 }
 
-static _Memory *
+static _MP_Memory *
 find_memory_list(MemoryPool *mp, void *p) {
-    _Memory *tmp = mp->mlist;
+    _MP_Memory *tmp = mp->mlist;
     while (tmp) {
         if (tmp->start <= (char *)p 
             && tmp->start + mp->mem_pool_size > (char *)p)
@@ -70,26 +70,26 @@ find_memory_list(MemoryPool *mp, void *p) {
 }
 
 static int 
-merge_free_chunk(MemoryPool *mp, _Memory *mm, _Chunk *c) {
+merge_free_chunk(MemoryPool *mp, _MP_Memory *mm, _MP_Chunk *c) {
     if (mp == NULL || mm == NULL || c == NULL || !c->is_free)
         return 1;
 
-    _Chunk *p0 = c, *p1 = c;
+    _MP_Chunk *p0 = c, *p1 = c;
     while (p0->is_free) {
         p1 = p0;
         if ((char *)p0 - MP_CHUNKEND - MP_CHUNKHEADER <= mm->start)
             break;
-        p0 = *(_Chunk **)((char *)p0 - MP_CHUNKEND);
+        p0 = *(_MP_Chunk **)((char *)p0 - MP_CHUNKEND);
     }
 
-    p0 = (_Chunk *)((char *)p1 + p1->alloc_mem);
+    p0 = (_MP_Chunk *)((char *)p1 + p1->alloc_mem);
     while ((char *)p0 < mm->start + mp->mem_pool_size && p0->is_free) {
         MP_DLINKLIST_DEL(mm->free_list, p0);
         p1->alloc_mem += p0->alloc_mem;
-        p0 = (_Chunk *)((char *)p0 + p0->alloc_mem);
+        p0 = (_MP_Chunk *)((char *)p0 + p0->alloc_mem);
     }
 
-    *(_Chunk **)((char *)p1 + p1->alloc_mem - MP_CHUNKEND) = p1;
+    *(_MP_Chunk **)((char *)p1 + p1->alloc_mem - MP_CHUNKEND) = p1;
     MP_UNLOCK(mp->thread_safe, mp);
     return 0;
 }
@@ -112,12 +112,12 @@ MemoryPool_Init(mem_size_t maxmempoolsize, mem_size_t mempoolsize, int thread_sa
     mp->total_mem_pool_size = mp->mem_pool_size = mempoolsize;
     pthread_mutex_init(&mp->lock, NULL);
 
-    char *s = (char *)malloc(sizeof(_Memory) 
+    char *s = (char *)malloc(sizeof(_MP_Memory) 
             + sizeof(char) * mp->mem_pool_size);
     if (!s) return NULL;
 
-    mp->mlist = (_Memory *)s;
-    mp->mlist->start = s + sizeof(_Memory);
+    mp->mlist = (_MP_Memory *)s;
+    mp->mlist->start = s + sizeof(_MP_Memory);
     MP_INIT_MEMORY_STRUCT(mp->mlist, mp->mem_pool_size);
     mp->mlist->next = NULL;
     mp->mlist->id   = mp->last_id++;
@@ -132,8 +132,8 @@ MemoryPool_Alloc(MemoryPool *mp, mem_size_t wantsize)
     mem_size_t total_needed_size = MP_ALIGN_SIZE(wantsize + MP_CHUNKHEADER + MP_CHUNKEND);
     if (total_needed_size > mp->mem_pool_size) return NULL;
 
-    _Memory *mm    = NULL, *mm1       = NULL;
-    _Chunk  *_free = NULL, *_not_free = NULL;
+    _MP_Memory *mm    = NULL, *mm1       = NULL;
+    _MP_Chunk  *_free = NULL, *_not_free = NULL;
 
     MP_LOCK(mp->thread_safe, mp);
 FIND_FREE_CHUNK:
@@ -154,10 +154,10 @@ FIND_FREE_CHUNK:
                     // 从free块头开始分割出alloc块
                     _not_free = _free;
 
-                    _free   = (_Chunk *)((char *)_not_free + total_needed_size);
+                    _free   = (_MP_Chunk *)((char *)_not_free + total_needed_size);
                     *_free  = *_not_free;
                     _free->alloc_mem -= total_needed_size;
-                    *(_Chunk **)((char *)_free + _free->alloc_mem - MP_CHUNKEND) = _free;
+                    *(_MP_Chunk **)((char *)_free + _free->alloc_mem - MP_CHUNKEND) = _free;
                     
                     // update free_list
                     if (!_free->prev) {
@@ -171,7 +171,7 @@ FIND_FREE_CHUNK:
                     _not_free->is_free   = 0;
                     _not_free->alloc_mem = total_needed_size;
 
-                    *(_Chunk **)((char *)_not_free + total_needed_size - MP_CHUNKEND) = _not_free;
+                    *(_MP_Chunk **)((char *)_not_free + total_needed_size - MP_CHUNKEND) = _not_free;
                 }
                 // 不够 则整块分配为alloc
                 else {
@@ -217,11 +217,11 @@ MemoryPool_Free(MemoryPool *mp, void *p)
     if (p == NULL || mp == NULL)
         return 1;
     MP_LOCK(mp->thread_safe, mp);
-    _Memory *mm = mp->mlist;
+    _MP_Memory *mm = mp->mlist;
     if (mp->auto_extend)
         mm = find_memory_list(mp, p);
 
-    _Chunk *ck = (_Chunk *)((char *)p - MP_CHUNKHEADER);
+    _MP_Chunk *ck = (_MP_Chunk *)((char *)p - MP_CHUNKHEADER);
     
     MP_DLINKLIST_DEL(mm->alloc_list, ck);
     MP_DLINKLIST_INS_FRT(mm->free_list,  ck);
@@ -237,7 +237,7 @@ MemoryPool *
 MemoryPool_Clear(MemoryPool *mp) {
     if (!mp) return NULL;
     MP_LOCK(mp->thread_safe, mp);
-    _Memory *mm = mp->mlist;
+    _MP_Memory *mm = mp->mlist;
     while (mm) {
         MP_INIT_MEMORY_STRUCT(mm, mm->mem_pool_size);
         mm = mm->next;
@@ -250,7 +250,7 @@ int
 MemoryPool_Destroy(MemoryPool *mp) {
     if (mp == NULL) return 1;
     MP_LOCK(mp->thread_safe, mp);
-    _Memory *mm = mp->mlist, *mm1 = NULL;
+    _MP_Memory *mm = mp->mlist, *mm1 = NULL;
     while (mm) {
         mm1 = mm;
         mm  = mm->next;
@@ -264,11 +264,23 @@ MemoryPool_Destroy(MemoryPool *mp) {
     return 0;
 }
 
+int 
+MemoryPool_SetThreadSafe(MemoryPool *mp, int thread_safe) {
+    MP_LOCK(mp->thread_safe, mp);
+    if (mp->thread_safe) {
+        mp->thread_safe = thread_safe;
+        MP_UNLOCK(1, mp);
+    } else {
+        mp->thread_safe = thread_safe;
+    }
+    return 0;
+}
+
 mem_size_t
 get_used_memory(MemoryPool *mp) {
     MP_LOCK(mp->thread_safe, mp);
     mem_size_t total_alloc = 0;
-    _Memory *mm = mp->mlist;
+    _MP_Memory *mm = mp->mlist;
     while (mm) {
         total_alloc += mm->alloc_mem;
         mm = mm->next;
@@ -281,7 +293,7 @@ mem_size_t
 get_prog_memory(MemoryPool *mp) {
     MP_LOCK(mp->thread_safe, mp);
     mem_size_t total_alloc_prog = 0;
-    _Memory *mm = mp->mlist;
+    _MP_Memory *mm = mp->mlist;
     while (mm) {
         total_alloc_prog += mm->alloc_prog_mem;
         mm = mm->next;

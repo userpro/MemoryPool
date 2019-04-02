@@ -4,6 +4,16 @@
 
 要一口气预分配大内存来管理
 
+## Log
+
+- 18-1-7 12.53 增加了自动扩展 (内存池耗尽时自动新扩展一个mempoolsize大小的内存)
+- 18-5-27 1.10 改进输出信息 增强测试程序(详见main.cpp)
+- 19-3-18 11.05 改进格式, 修复潜在bug
+- 19-4-1 20:46 增加线程安全选项, 修改了自动扩展逻辑.
+
+## Next
+
+- 伙伴内存管理
 
 ## Example
 
@@ -58,6 +68,7 @@ void*       MemoryPool_Alloc  (MemoryPool *mp, mem_size_t wantsize);
 int         MemoryPool_Free   (MemoryPool *mp, void *p);
 MemoryPool* MemoryPool_Clear  (MemoryPool *mp);
 int         MemoryPool_Destroy(MemoryPool *mp);
+int         MemoryPool_SetThreadSafe(MemoryPool *mp, int thread_safe);
 ~~~
 
 - 获取内存池信息
@@ -74,13 +85,6 @@ float      get_mempool_usage(MemoryPool *mp);
 mem_size_t get_prog_memory  (MemoryPool *mp);
 float      get_mempool_prog_usage(MemoryPool *mp);
 ~~~
-
-## Update
-
-- 18-1-7 12.53 增加了自动扩展 (内存池耗尽时自动新扩展一个mempoolsize大小的内存)
-- 18-5-27 1.10 改进输出信息 增强测试程序(详见main.cpp)
-- 19-3-18 11.05 改进格式, 修复潜在bug
-- 19-4-1 20:46 增加线程安全选项, 修改了自动扩展逻辑.
 
 ## Tips
 

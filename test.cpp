@@ -37,7 +37,7 @@
         x, get_mempool_usage(mp), get_mempool_prog_usage(mp)); \
     get_memory_list_count(mp, &mlist_cnt); \
     printf("->> [memorypool_list_count] mlist(%llu)\n", mlist_cnt); \
-    _Memory *mlist = mp->mlist; \
+    _MP_Memory *mlist = mp->mlist; \
     while (mlist) { \
         get_memory_info(mp, mlist, &free_cnt, &alloc_cnt); \
         printf("->>> id: %d [list_count] free_list(%llu)  alloc_list(%llu)\n", get_memory_id(mlist), free_cnt, alloc_cnt); \
@@ -60,13 +60,15 @@ struct Node
     bool operator <(const Node& n) const { return size < n.size; }
 };
 
-unsigned int random_uint(unsigned int maxn)
+unsigned int 
+random_uint(unsigned int maxn)
 {
     unsigned int ret = abs(rand()) % maxn;
     return ret > 0 ? ret : 32;
 }
 
-void *test_fn(void *arg) {
+void *
+test_fn(void *arg) {
     Node mem[DATA_N];
 #ifdef _Z_MEMORYPOOL_H_
     MemoryPool *mp = (MemoryPool *)arg;
@@ -177,9 +179,10 @@ int main()
     pthread_join(pid2, NULL);
     pthread_join(pid3, NULL);
 
-// 第二次执行
+    // 第二次执行
     printf("\n>\n>\n>\n\n");
     total_size = 0;
+    MemoryPool_SetThreadSafe(mp, 0);
 
 #ifdef _Z_MEMORYPOOL_H_
     pthread_create(&pid1, &attr, test_fn, mp);
@@ -193,6 +196,7 @@ int main()
     pthread_join(pid1, NULL);
     // pthread_join(pid2, NULL);
     // pthread_join(pid3, NULL);
+
 
 #ifdef _Z_MEMORYPOOL_H_
     MemoryPool_Destroy(mp);
