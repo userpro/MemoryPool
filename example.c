@@ -15,6 +15,8 @@ int main()
     struct TAT *tat = (struct TAT *)MemoryPool_Alloc(mp, sizeof(struct TAT));
     tat->T_T = 2333;
     printf("%d\n", tat->T_T);
+    int *a = (int *)MemoryPool_Calloc(mp, sizeof(int));
+    printf("%d\n", *a);
     MemoryPool_Free(mp, tat);
     MemoryPool_Clear(mp);
     MemoryPool_Destroy(mp);

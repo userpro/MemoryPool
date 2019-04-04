@@ -1,5 +1,48 @@
 #include "memorypool.h"
 
+#define MP_CHUNKHEADER sizeof(struct _mp_chunk)
+#define MP_CHUNKEND    sizeof(struct _mp_chunk *)
+
+#define MP_LOCK(flag, lockobj) do { \
+    if (flag) pthread_mutex_lock(&lockobj->lock); \
+} while (0)
+#define MP_UNLOCK(flag, lockobj) do { \
+    if (flag) pthread_mutex_unlock(&lockobj->lock); \
+} while (0)
+
+#define MP_ALIGN_SIZE(_n) (_n + sizeof(long) - ((sizeof(long)-1)&_n))
+
+#define MP_INIT_MEMORY_STRUCT(mm, mem_sz) do { \
+    mm->mem_pool_size = mem_sz; \
+    mm->alloc_mem = 0; \
+    mm->alloc_prog_mem = 0; \
+    mm->free_list = (_MP_Chunk *)mm->start; \
+    mm->free_list->is_free = 1; \
+    mm->free_list->alloc_mem = mem_sz; \
+    mm->free_list->prev = NULL; \
+    mm->free_list->next = NULL; \
+    mm->alloc_list = NULL; \
+} while (0)
+
+#define MP_DLINKLIST_INS_FRT(head,x) do { \
+    x->prev = NULL; \
+    x->next = head; \
+    if (head) \
+        head->prev = x; \
+    head = x; \
+} while(0)
+
+#define MP_DLINKLIST_DEL(head,x) do { \
+    if (!x->prev) { \
+        head = x->next; \
+        if (x->next) x->next->prev = NULL; \
+    } else { \
+        x->prev->next = x->next; \
+        if (x->next) x->next->prev = x->prev; \
+    } \
+} while(0)
+
+
 void 
 get_memory_list_count(MemoryPool *mp, mem_size_t *mlist_len) {
     MP_LOCK(mp->thread_safe, mp);
@@ -211,6 +254,15 @@ FIND_FREE_CHUNK:
     return NULL;
 }
 
+void * 
+MemoryPool_Calloc (MemoryPool *mp, mem_size_t wantsize) {
+    char *m = (char *)MemoryPool_Alloc(mp, wantsize);
+    if (!m) return NULL;
+    _MP_Chunk *ck = (_MP_Chunk *)(m - MP_CHUNKHEADER);
+    memset((void *)m, ck->alloc_mem - MP_CHUNKHEADER - MP_CHUNKEND, 0);
+    return m;
+}
+
 int 
 MemoryPool_Free(MemoryPool *mp, void *p)
 {
@@ -312,3 +364,11 @@ get_mempool_prog_usage(MemoryPool *mp) {
     return (float)get_prog_memory(mp) / mp->total_mem_pool_size;
 }
 
+#undef MP_CHUNKHEADER
+#undef MP_CHUNKEND
+#undef MP_LOCK
+#undef MP_UNLOCK
+#undef MP_ALIGN_SIZE
+#undef MP_INIT_MEMORY_STRUCT
+#undef MP_DLINKLIST_INS_FRT
+#undef MP_DLINKLIST_DEL

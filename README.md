@@ -21,10 +21,12 @@
 #include "memorypool.h"
 #include <stdio.h>
 
-struct TAT {
+struct TAT
+{
     int T_T;
 };
-mem_size_t max_mem = 2*GB + 500*MB + 500*KB;
+
+mem_size_t max_mem = 2*GB + 1000*MB + 1000*KB;
 mem_size_t mem_pool_size = 1*GB + 500*MB + 500*KB;
 
 int main()
@@ -33,6 +35,8 @@ int main()
     struct TAT *tat = (struct TAT *)MemoryPool_Alloc(mp, sizeof(struct TAT));
     tat->T_T = 2333;
     printf("%d\n", tat->T_T);
+    int *a = (int *)MemoryPool_Calloc(mp, sizeof(int));
+    printf("%d\n", *a);
     MemoryPool_Free(mp, tat);
     MemoryPool_Clear(mp);
     MemoryPool_Destroy(mp);
@@ -65,6 +69,7 @@ int main()
 ~~~c
 MemoryPool* MemoryPool_Init   (mem_size_t maxmempoolsize, mem_size_t mempoolsize, int thread_safe);
 void*       MemoryPool_Alloc  (MemoryPool *mp, mem_size_t wantsize);
+void*       MemoryPool_Calloc (MemoryPool *mp, mem_size_t wantsize);
 int         MemoryPool_Free   (MemoryPool *mp, void *p);
 MemoryPool* MemoryPool_Clear  (MemoryPool *mp);
 int         MemoryPool_Destroy(MemoryPool *mp);
