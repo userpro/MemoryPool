@@ -112,8 +112,6 @@ static _MP_Memory* find_memory_list(MemoryPool* mp, void* p) {
 }
 
 static int merge_free_chunk(MemoryPool* mp, _MP_Memory* mm, _MP_Chunk* c) {
-    if (mp == NULL || mm == NULL || c == NULL || !c->is_free) return 1;
-
     _MP_Chunk *p0 = c, *p1 = c;
     while (p0->is_free) {
         p1 = p0;
