@@ -1,6 +1,10 @@
 #ifndef _Z_MEMORYPOOL_H_
 #define _Z_MEMORYPOOL_H_
+
+#ifdef _Z_MEMORYPOOL_THREAD_
 #include <pthread.h>
+#endif
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -23,16 +27,16 @@ typedef struct _mp_mem_pool_list {
     mem_size_t alloc_prog_mem;
     _MP_Chunk *free_list, *alloc_list;
     struct _mp_mem_pool_list* next;
-    // pthread_mutex_t lock;
 } _MP_Memory;
 
 typedef struct _mp_mem_pool {
     unsigned int last_id;
     int auto_extend;
-    int thread_safe;
     mem_size_t mem_pool_size, total_mem_pool_size, max_mem_pool_size;
     struct _mp_mem_pool_list* mlist;
+#ifdef _Z_MEMORYPOOL_THREAD_
     pthread_mutex_t lock;
+#endif
 } MemoryPool;
 
 /*
@@ -52,25 +56,24 @@ int get_memory_id(_MP_Memory* mm);
  *  内存池API
  */
 
-MemoryPool* MemoryPool_Init(mem_size_t maxmempoolsize,
-                            mem_size_t mempoolsize,
-                            int thread_safe);
-void* MemoryPool_Alloc(MemoryPool* mp, mem_size_t wantsize);
-void* MemoryPool_Calloc(MemoryPool* mp, mem_size_t wantsize);
-int MemoryPool_Free(MemoryPool* mp, void* p);
-MemoryPool* MemoryPool_Clear(MemoryPool* mp);
-int MemoryPool_Destroy(MemoryPool* mp);
-int MemoryPool_SetThreadSafe(MemoryPool* mp, int thread_safe);
+MemoryPool* MemoryPoolInit(mem_size_t maxmempoolsize, mem_size_t mempoolsize);
+void* MemoryPoolAlloc(MemoryPool* mp, mem_size_t wantsize);
+int MemoryPoolFree(MemoryPool* mp, void* p);
+MemoryPool* MemoryPoolClear(MemoryPool* mp);
+int MemoryPoolDestroy(MemoryPool* mp);
+int MemoryPoolSetThreadSafe(MemoryPool* mp, int thread_safe);
 
 /*
  *  内存池信息API
  */
 
+// 总空间
+mem_size_t GetTotalMemory(MemoryPool* mp);
 // 实际分配空间
-mem_size_t get_used_memory(MemoryPool* mp);
-float get_mempool_usage(MemoryPool* mp);
+mem_size_t GetUsedMemory(MemoryPool* mp);
+float MemoryPoolGetUsage(MemoryPool* mp);
 // 数据占用空间
-mem_size_t get_prog_memory(MemoryPool* mp);
-float get_mempool_prog_usage(MemoryPool* mp);
+mem_size_t GetProgMemory(MemoryPool* mp);
+float MemoryPoolGetProgUsage(MemoryPool* mp);
 
 #endif  // !_Z_MEMORYPOOL_H_

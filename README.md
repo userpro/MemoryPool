@@ -10,10 +10,17 @@
 - 18-5-27 1.10 改进输出信息 增强测试程序(详见main.cpp)
 - 19-3-18 11.05 改进格式, 修复潜在bug
 - 19-4-1 20:46 增加线程安全选项, 修改了自动扩展逻辑.
+- 19-10-14 21:44 reformat 修改多线程启用模式, 移除Calloc
 
 ## Next
 
 - 伙伴内存管理
+- 读写锁
+
+## Makefile
+- run_single_test 运行单线程测试
+- run_multi_test 运行多线程测试
+- run_example 运行example.c
 
 ## Example
 
@@ -31,15 +38,13 @@ mem_size_t mem_pool_size = 1*GB + 500*MB + 500*KB;
 
 int main()
 {
-    MemoryPool *mp = MemoryPool_Init(max_mem, mem_pool_size, 0);
-    struct TAT *tat = (struct TAT *)MemoryPool_Alloc(mp, sizeof(struct TAT));
+    MemoryPool *mp = MemoryPoolInit(max_mem, mem_pool_size);
+    struct TAT *tat = (struct TAT *)MemoryPoolAlloc(mp, sizeof(struct TAT));
     tat->T_T = 2333;
     printf("%d\n", tat->T_T);
-    int *a = (int *)MemoryPool_Calloc(mp, sizeof(int));
-    printf("%d\n", *a);
-    MemoryPool_Free(mp, tat);
-    MemoryPool_Clear(mp);
-    MemoryPool_Destroy(mp);
+    MemoryPoolFree(mp, tat);
+    MemoryPoolClear(mp);
+    MemoryPoolDestroy(mp);
     return 0;
 }
 ~~~
@@ -54,48 +59,47 @@ int main()
 
 `mem_size_t` => `unsigned long long`
 
-`MemoryPool_Init` 参数(`mem_size_t maxmempoolsize`, `mem_size_t mempoolsize`, `int thread_safe`)
+`MemoryPoolInit` 参数(`mem_size_t maxmempoolsize`, `mem_size_t mempoolsize`)
 
 > `maxmempoolsize`: 内存池字节数上限
 >
 > `mempoolsize`: 内存池字节数 (maxmempoolsize与mempoolsize不相等时会自动扩展, 直到上限)
 >
-> `thread_safe`: 是否线程安全 (1->线程安全)
 
-`MemoryPool_Alloc` 行为与系统malloc一致(参数多了一个)
+`MemoryPoolAlloc` 行为与系统malloc一致(参数多了一个)
 
-`MemoryPool_Free` 行为与系统free一致(返回值0为正常)
+`MemoryPoolFree` 行为与系统free一致(返回值0为正常)
 
 ~~~c
-MemoryPool* MemoryPool_Init   (mem_size_t maxmempoolsize, mem_size_t mempoolsize, int thread_safe);
-void*       MemoryPool_Alloc  (MemoryPool *mp, mem_size_t wantsize);
-void*       MemoryPool_Calloc (MemoryPool *mp, mem_size_t wantsize);
-int         MemoryPool_Free   (MemoryPool *mp, void *p);
-MemoryPool* MemoryPool_Clear  (MemoryPool *mp);
-int         MemoryPool_Destroy(MemoryPool *mp);
-int         MemoryPool_SetThreadSafe(MemoryPool *mp, int thread_safe);
+MemoryPool* MemoryPoolInit   (mem_size_t maxmempoolsize, mem_size_t mempoolsize);
+void*       MemoryPoolAlloc  (MemoryPool *mp, mem_size_t wantsize);
+int         MemoryPoolFree   (MemoryPool *mp, void *p);
+MemoryPool* MemoryPoolClear  (MemoryPool *mp);
+int         MemoryPoolDestroy(MemoryPool *mp);
 ~~~
 
 - 获取内存池信息
 
-`get_mempool_usage` 获取当前内存池已使用内存比例
+`MemoryPoolGetUsage` 获取当前内存池已使用内存比例
 
-`get_mempool_prog_usage` 获取内存池中真实分配内存比例(除去了内存池管理结构占用的内存)
+`MemoryPoolGetProgUsage` 获取内存池中真实分配内存比例(除去了内存池管理结构占用的内存)
 
 ~~~c
+// 总空间
+mem_size_t GetTotalMemory(MemoryPool* mp);
 // 实际分配空间
-mem_size_t get_used_memory  (MemoryPool *mp);
-float      get_mempool_usage(MemoryPool *mp);
+mem_size_t GetUsedMemory     (MemoryPool *mp);
+float      MemoryPoolGetUsage(MemoryPool *mp);
 // 数据占用空间
-mem_size_t get_prog_memory  (MemoryPool *mp);
-float      get_mempool_prog_usage(MemoryPool *mp);
+mem_size_t GetProgMemory     (MemoryPool *mp);
+float      MemoryPoolGetProgUsage(MemoryPool *mp);
 ~~~
 
 ## Tips
 
 - 可通过注释`test.c`里的`#include "memorypool.h"`来切换对比系统`malloc` `free`和内存池
-- 线程安全(如无必要, 关闭线程安全以改进性能)
-- 多食用`MemoryPool_Clear` (多线程情况下慎用)
-- 在 **2GB** 数据量 **顺序分配释放** 的情况下比系统`malloc` `free`平均快 **30%-50%** (食用`MemoryPool_Clear`效果更明显)
+- 线程安全(需通过提供编译选项`-D _Z_MEMORYPOOL_THREAD_`或者`memorypool.h`文件增加`#define _Z_MEMORYPOOL_THREAD_`)
+- 多食用`MemoryPoolClear` (多线程情况下慎用)
+- 在 **2GB** 数据量 **顺序分配释放** 的情况下比系统`malloc` `free`平均快 **30%-50%** (食用`MemoryPoolClear`效果更明显)
 - `mem_size_t`使用`unsigned long long`以支持4GB以上内存管理
 - 大量小块内存分配会有 **20%-30%** 内存空间损失(用于存储管理结构体)

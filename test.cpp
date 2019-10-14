@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <algorithm>
+
 #include "memorypool.h"  // 注释这行比较系统malloc与memory pool的性能
 
 // 开启ENABLE_SHOW输出内部信息 会极大的影响性能
@@ -11,16 +12,16 @@
 // #define HARD_MODE
 
 /* -------- 测试数据参数 -------- */
-#define MAX_MEM_SIZE (3 * GB)    // 内存池管理的每个内存块大小
-#define MEM_SIZE (0.6 * GB)      // 内存池管理的每个内存块大小
+#define MAX_MEM_SIZE (2 * GB)   // 内存池管理的每个内存块大小
+#define MEM_SIZE (0.3 * GB)     // 内存池管理的每个内存块大小
 #define DATA_N (50000)           // 数据条数
 #define DATA_MAX_SIZE (16 * KB)  // 每条数据最大尺寸
-#define MAX_N (3)                // 总测试次数
+#define MAX_N (3)               // 总测试次数
 /* -------- 测试数据参数 -------- */
 
 #ifdef _Z_MEMORYPOOL_H_
-#define My_Malloc(x) MemoryPool_Alloc(mp, x)
-#define My_Free(x) MemoryPool_Free(mp, x)
+#define My_Malloc(x) MemoryPoolAlloc(mp, x)
+#define My_Free(x) MemoryPoolFree(mp, x)
 #else
 #define KB (unsigned long long) (1 << 10)
 #define MB (unsigned long long) (1 << 20)
@@ -37,8 +38,8 @@
         printf("-> %s\n->> Memory Usage: %.4lf\n->> Memory Usage(prog): " \
                "%.4lf\n",                                                 \
                x,                                                         \
-               get_mempool_usage(mp),                                     \
-               get_mempool_prog_usage(mp));                               \
+               MemoryPoolGetUsage(mp),                                    \
+               MemoryPoolGetProgUsage(mp));                               \
         get_memory_list_count(mp, &mlist_cnt);                            \
         printf("->> [memorypool_list_count] mlist(%llu)\n", mlist_cnt);   \
         _MP_Memory* mlist = mp->mlist;                                    \
@@ -147,7 +148,6 @@ void* test_fn(void* arg) {
     printf("Total Usage Size: %.4lf MB\n", (double) total_size / 1024 / 1024);
 
     pthread_mutex_unlock(&mutex);
-
     return NULL;
 }
 
@@ -161,7 +161,7 @@ int main() {
     printf("System malloc:\n");
 #else
     printf("Memory Pool:\n");
-    MemoryPool* mp = MemoryPool_Init(MAX_MEM_SIZE, MEM_SIZE, 1);
+    MemoryPool* mp = MemoryPoolInit(MAX_MEM_SIZE, MEM_SIZE);
 #endif
 
     pthread_attr_t attr;
@@ -170,7 +170,8 @@ int main() {
     pthread_t pid1, pid2, pid3;
 
 // 第一次执行
-#ifdef _Z_MEMORYPOOL_H_
+#ifdef _Z_MEMORYPOOL_THREAD_
+#if (defined _Z_MEMORYPOOL_H_)
     pthread_create(&pid1, &attr, test_fn, mp);
     pthread_create(&pid2, &attr, test_fn, mp);
     pthread_create(&pid3, &attr, test_fn, mp);
@@ -185,8 +186,9 @@ int main() {
 
     // 第二次执行
     printf("\n>\n>\n>\n\n");
+#endif
+
     total_size = 0;
-    MemoryPool_SetThreadSafe(mp, 0);
 
 #ifdef _Z_MEMORYPOOL_H_
     pthread_create(&pid1, &attr, test_fn, mp);
@@ -202,7 +204,7 @@ int main() {
     // pthread_join(pid3, NULL);
 
 #ifdef _Z_MEMORYPOOL_H_
-    MemoryPool_Destroy(mp);
+    MemoryPoolDestroy(mp);
 #endif
 
     finish = clock();
