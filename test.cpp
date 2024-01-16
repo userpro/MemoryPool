@@ -12,11 +12,11 @@
 // #define HARD_MODE
 
 /* -------- 测试数据参数 -------- */
-#define MAX_MEM_SIZE (2 * GB)   // 内存池管理的每个内存块大小
-#define MEM_SIZE (0.3 * GB)     // 内存池管理的每个内存块大小
+#define MAX_MEM_SIZE (2 * GB)    // 内存池管理的每个内存块大小
+#define MEM_SIZE (0.3 * GB)      // 内存池管理的每个内存块大小
 #define DATA_N (50000)           // 数据条数
 #define DATA_MAX_SIZE (16 * KB)  // 每条数据最大尺寸
-#define MAX_N (3)               // 总测试次数
+#define MAX_N (3)                // 总测试次数
 /* -------- 测试数据参数 -------- */
 
 #ifdef _Z_MEMORYPOOL_H_
@@ -143,7 +143,7 @@ void* test_fn(void* arg) {
     SHOW("Free After: ", mp);
 #endif
     printf("Memory Pool Size: %.4lf MB\n",
-           (double) mp->total_mem_pool_size / 1024 / 1024);
+           (double) mp->total_mempool_size / 1024 / 1024);
 #endif
     printf("Total Usage Size: %.4lf MB\n", (double) total_size / 1024 / 1024);
 

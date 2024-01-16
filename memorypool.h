@@ -19,21 +19,21 @@ typedef struct _mp_chunk {
     int is_free;
 } _MP_Chunk;
 
-typedef struct _mp_mem_pool_list {
+typedef struct _mp_mempool_list {
     char* start;
     unsigned int id;
-    mem_size_t mem_pool_size;
+    mem_size_t mempool_size;
     mem_size_t alloc_mem;
     mem_size_t alloc_prog_mem;
     _MP_Chunk *free_list, *alloc_list;
-    struct _mp_mem_pool_list* next;
+    struct _mp_mempool_list* next;
 } _MP_Memory;
 
-typedef struct _mp_mem_pool {
+typedef struct _mp_mempool {
     unsigned int last_id;
     int auto_extend;
-    mem_size_t mem_pool_size, total_mem_pool_size, max_mem_pool_size;
-    struct _mp_mem_pool_list* mlist;
+    mem_size_t mempool_size, total_mempool_size, max_mempool_size;
+    struct _mp_mempool_list* mlist;
 #ifdef _Z_MEMORYPOOL_THREAD_
     pthread_mutex_t lock;
 #endif
