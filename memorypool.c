@@ -250,7 +250,7 @@ FIND_FREE_CHUNK:
 
     if (mp->auto_extend) {
         // 超过总内存限制
-        if (mp->alloc_mempool_size + total_needed_size >= mp->max_mempool_size) {
+        if (mp->alloc_mempool_size + total_needed_size > mp->max_mempool_size) {
             goto err_out;
         }
         // 剩余可新增内存池大小
