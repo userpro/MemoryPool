@@ -12,7 +12,7 @@
         pthread_mutex_unlock(&lockobj->lock); \
     } while (0)
 
-#define MP_ALIGN_SIZE(_n) (_n + sizeof(long) - ((sizeof(long) - 1) & _n))
+#define MP_ALIGN_SIZE(_n) (_n + sizeof(long) - ((sizeof(long) - 1) & (_n)))
 
 #define MP_INIT_MEMORY_STRUCT(mm, mempool_sz)   \
     do {                                        \
@@ -153,7 +153,7 @@ MemoryPool* MemoryPoolInit(mem_size_t max_mempool_size, mem_size_t mempool_size)
     mp->last_id = 0;
     if (mempool_size < max_mempool_size) mp->auto_extend = 1;
     mp->max_mempool_size = max_mempool_size;
-    mp->total_mempool_size = mp->mempool_size = mempool_size;
+    mp->alloc_mempool_size = mp->mempool_size = mempool_size; // 初始分配一个内存池
 
 #ifdef _Z_MEMORYPOOL_THREAD_
     pthread_mutex_init(&mp->lock, NULL);
@@ -181,7 +181,7 @@ void* MemoryPoolAlloc(MemoryPool* mp, mem_size_t wantsize) {
             MP_ALIGN_SIZE(wantsize + MP_CHUNKHEADER + MP_CHUNKEND);
     if (total_needed_size > mp->mempool_size) return NULL;
 
-    _MP_Memory *mm = NULL, *mm1 = NULL;
+    _MP_Memory *mm = NULL;
     _MP_Chunk *_free = NULL, *_not_free = NULL;
 #ifdef _Z_MEMORYPOOL_THREAD_
     MP_LOCK(mp);
@@ -250,17 +250,17 @@ FIND_FREE_CHUNK:
 
     if (mp->auto_extend) {
         // 超过总内存限制
-        if (mp->total_mempool_size >= mp->max_mempool_size) {
+        if (mp->alloc_mempool_size + total_needed_size >= mp->max_mempool_size) {
             goto err_out;
         }
+        // 剩余可新增内存池大小
         mem_size_t add_mem_sz = mp->max_mempool_size - mp->mempool_size;
+        // 如果空间足够则按 mempool_size 新增, 不足则分配剩下所有内存
         add_mem_sz = add_mem_sz >= mp->mempool_size ? mp->mempool_size
                                                      : add_mem_sz;
-        mm1 = extend_memory_list(mp, add_mem_sz);
-        if (!mm1) {
-            goto err_out;
-        }
-        mp->total_mempool_size += add_mem_sz;
+        if (!extend_memory_list(mp, add_mem_sz)) goto err_out;
+        // 更新实际分配内存
+        mp->alloc_mempool_size += add_mem_sz;
 
         goto FIND_FREE_CHUNK;
     }
@@ -329,7 +329,7 @@ int MemoryPoolDestroy(MemoryPool* mp) {
 }
 
 mem_size_t GetTotalMemory(MemoryPool* mp) {
-    return mp->total_mempool_size;
+    return mp->alloc_mempool_size;
 }
 
 mem_size_t GetUsedMemory(MemoryPool* mp) {

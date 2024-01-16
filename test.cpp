@@ -143,7 +143,7 @@ void* test_fn(void* arg) {
     SHOW("Free After: ", mp);
 #endif
     printf("Memory Pool Size: %.4lf MB\n",
-           (double) mp->total_mempool_size / 1024 / 1024);
+           (double) mp->alloc_mempool_size / 1024 / 1024);
 #endif
     printf("Total Usage Size: %.4lf MB\n", (double) total_size / 1024 / 1024);
 

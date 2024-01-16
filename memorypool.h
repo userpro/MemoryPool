@@ -22,9 +22,9 @@ typedef struct _mp_chunk {
 typedef struct _mp_mempool_list {
     char* start;
     unsigned int id;
-    mem_size_t mempool_size;
-    mem_size_t alloc_mem;
-    mem_size_t alloc_prog_mem;
+    mem_size_t mempool_size;       // 固定值 每个内存池最大内存
+    mem_size_t alloc_mem;          // 统计值 当前池内已分配的内存总大小
+    mem_size_t alloc_prog_mem;     // 统计值 当前池内实际分配给应用程序的内存总大小(减去内存管理元信息)
     _MP_Chunk *free_list, *alloc_list;
     struct _mp_mempool_list* next;
 } _MP_Memory;
@@ -32,7 +32,9 @@ typedef struct _mp_mempool_list {
 typedef struct _mp_mempool {
     unsigned int last_id;
     int auto_extend;
-    mem_size_t mempool_size, total_mempool_size, max_mempool_size;
+    mem_size_t mempool_size;       // 固定值 每个内存池最大内存
+    mem_size_t max_mempool_size;   // 固定值 所有内存池加和总上限
+    mem_size_t alloc_mempool_size; // 统计值 当前已分配的内存池总大小
     struct _mp_mempool_list* mlist;
 #ifdef _Z_MEMORYPOOL_THREAD_
     pthread_mutex_t lock;
