@@ -161,7 +161,10 @@ MemoryPool* MemoryPoolInit(mem_size_t maxmempoolsize, mem_size_t mempoolsize) {
 
     char* s = (char*) malloc(sizeof(_MP_Memory) +
                              sizeof(char) * mp->mem_pool_size);
-    if (!s) return NULL;
+    if (!s) {
+        free(mp);
+        return NULL;
+    }
 
     mp->mlist = (_MP_Memory*) s;
     mp->mlist->start = s + sizeof(_MP_Memory);
