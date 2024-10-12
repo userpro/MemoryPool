@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 #define mem_size_t unsigned long long
 #define KB (mem_size_t)(1 << 10)

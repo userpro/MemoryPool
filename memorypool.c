@@ -12,7 +12,7 @@
         pthread_mutex_unlock(&lockobj->lock); \
     } while (0)
 
-#define MP_ALIGN_SIZE(_n) (_n + sizeof(long) - ((sizeof(long) - 1) & (_n)))
+#define MP_ALIGN_SIZE(_n) (((uintptr_t) (_n) + ((sizeof(long)) - 1)) & ~((uintptr_t) ((sizeof(long)) - 1)))
 
 #define MP_INIT_MEMORY_STRUCT(mm, mempool_sz)   \
     do {                                        \
